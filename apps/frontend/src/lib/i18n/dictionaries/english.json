@@ -1,0 +1,59 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "submit": "Submit", 
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "next": "Next",
+    "previous": "Previous",
+    "close": "Close",
+    "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete",
+    "search": "Search"
+  },
+  "navigation": {
+    "home": "Home",
+    "services": "Services",
+    "products": "Products", 
+    "bookings": "My Bookings",
+    "contact": "Contact",
+    "emergency": "Emergency"
+  },
+  "services": {
+    "electrical": "Electrical",
+    "plumbing": "Plumbing",
+    "emergency": "Emergency Service",
+    "bookService": "Book Service",
+    "whichService": "Which Service?",
+    "fanRepair": "Fan Repair",
+    "lightRepair": "Light Repair", 
+    "tapRepair": "Tap Repair",
+    "toiletRepair": "Toilet Repair"
+  },
+  "booking": {
+    "whatProblem": "What's the Problem?",
+    "describeProblem": "Describe the problem...",
+    "yourDetails": "Your Details",
+    "name": "Name",
+    "mobile": "Mobile Number",
+    "address": "Address", 
+    "whenNeeded": "When needed?",
+    "confirmDetails": "Confirm Details",
+    "bookingConfirmed": "Booking Confirmed!",
+    "bookingId": "Your Booking ID",
+    "teamWillCall": "Our team will call within 30 minutes"
+  },
+  "timeSlots": {
+    "morning": "Morning",
+    "afternoon": "Afternoon",
+    "evening": "Evening", 
+    "available": "Available",
+    "busy": "Busy"
+  },
+  "payment": {
+    "paymentMethod": "Payment",
+    "cashOnService": "Pay after service completion", 
+    "payAfterCompletion": "Pay after service completion"
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "common": {
+    "loading": "ஏற்றுகிறது...",
+    "submit": "சமர்ப்பிக்கவும்",
+    "cancel": "ரத்து செய்க",
+    "confirm": "உறுதிப்படுத்து",
+    "next": "அடுத்து",
+    "previous": "முந்தைய",
+    "close": "மூடு",
+    "save": "சேமி",
+    "edit": "திருத்து",
+    "delete": "நீக்கு",
+    "search": "தேடு"
+  },
+  "navigation": {
+    "home": "முகப்பு",
+    "services": "சேவைகள்",
+    "products": "பொருட்கள்",
+    "bookings": "எனது பதிவுகள்",
+    "contact": "தொடர்பு",
+    "emergency": "அவசரம்"
+  },
+  "services": {
+    "electrical": "மின்சாரம்",
+    "plumbing": "குழாய்",
+    "emergency": "அவசர சேவை",
+    "bookService": "சேவை பதிவு",
+    "whichService": "எந்த சேவை வேண்டும்?",
+    "fanRepair": "விசிறி பழுது",
+    "lightRepair": "விளக்கு பழுது",
+    "tapRepair": "குழாய் பழுது",
+    "toiletRepair": "கழிவறை பழுது"
+  },
+  "booking": {
+    "whatProblem": "பிரச்சனை என்ன?",
+    "describeProblem": "பிரச்சனையை விவரிக்கவும்...",
+    "yourDetails": "உங்கள் விபரங்கள்",
+    "name": "பெயர்",
+    "mobile": "மொபைல் எண்",
+    "address": "முகவரி",
+    "whenNeeded": "எப்போது வேண்டும்?",
+    "confirmDetails": "விபரங்களை சரிபார்",
+    "bookingConfirmed": "பதிவு முடிந்தது!",
+    "bookingId": "உங்கள் பதிவு எண்",
+    "teamWillCall": "எங்கள் ஊழியர்கள் 30 நிமிடத்தில் அழைப்பார்கள்"
+  },
+  "timeSlots": {
+    "morning": "காலை",
+    "afternoon": "மதியம்", 
+    "evening": "மாலை",
+    "available": "கிடைக்கிறது",
+    "busy": "பிசி"
+  },
+  "payment": {
+    "paymentMethod": "கட்டணம்",
+    "cashOnService": "சேவை பார்த்த பிறக கொடுக்கவும்",
+    "payAfterCompletion": "சேவை முடிந்த பின் பணம் கொடுக்கவும்"
+  }
+}
