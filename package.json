@@ -31,7 +31,7 @@
   
     "build": "nx run-many --target=build --projects=frontend,backend",
     "start:frontend": "next start apps/frontend -p 3100",
-    "start:backend": "node apps/backend/src/index.js"
+    "start:backend": "node apps/backend/src/main.js"
   
 
 
