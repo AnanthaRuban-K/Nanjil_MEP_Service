@@ -31,7 +31,7 @@
     "db:push": "nx run backend:db:push",
     "db:studio": "nx run backend:db:studio",
   
-    "build": "nx run-many --target=build --projects=frontend,backend",
+    "build": "nx run-many --target=build --projects=frontend,backend"
     
 
 
