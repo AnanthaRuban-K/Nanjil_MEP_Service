@@ -3,7 +3,9 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    
+    "build": "nx build frontend && nx build backend",
+    "start:frontend": "nx serve frontend",
+    "start:backend": "nx serve backend",
     "dev": "nx run-many --target=dev --projects=frontend,backend --parallel",
     "dev:frontend": "nx dev frontend",
     "dev:backend": "nx dev backend",
@@ -30,9 +32,7 @@
     "db:studio": "nx run backend:db:studio",
   
     "build": "nx run-many --target=build --projects=frontend,backend",
-    "start:frontend": "next start apps/frontend -p 3100",
-    "start:backend": "node apps/backend/src/main.js"
-  
+    
 
 
   },
