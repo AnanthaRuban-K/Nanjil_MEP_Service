@@ -1,0 +1,7 @@
+{
+  "scripts": {
+    "dev": "nx serve frontend",
+    "build": "nx build frontend --prod",
+    "start": "npx serve -s dist/apps/frontend -l 3100"
+  }
+}

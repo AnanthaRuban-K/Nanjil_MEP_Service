@@ -1,30 +1,20 @@
-# 1. Build stage
-FROM node:20-alpine AS builder
+# Stage 1: Dependencies
+FROM node:20-alpine AS deps
 WORKDIR /app
-
-# Copy package files
 COPY package*.json ./
-COPY tsconfig*.json ./
-COPY nx.json ./
-COPY workspace.json ./
-COPY apps/frontend ./apps/frontend
-COPY libs ./libs
-
-# Install dependencies
+COPY apps/frontend/package*.json ./apps/frontend/
 RUN npm install
 
-# Build Next.js frontend
-RUN npm run build --workspace=frontend
+# Stage 2: Build
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY . .
+COPY --from=deps /app/node_modules ./node_modules
+RUN npx nx build frontend --prod
 
-# 2. Production stage
+# Stage 3: Production
 FROM node:20-alpine AS runner
 WORKDIR /app
-
-ENV NODE_ENV=production
-ENV PORT=3100
-
-COPY --from=builder /app/dist/apps/frontend ./
-
+COPY --from=builder /app/dist/apps/frontend ./dist/apps/frontend
 EXPOSE 3100
-
-CMD ["npx", "next", "start", "-p", "3100"]
+CMD ["npx", "serve", "-s", "dist/apps/frontend", "-l", "3100"]
