@@ -1,8 +1,8 @@
+// hooks/use-websocket.ts
 import { useEffect, useRef, useState } from 'react'
-
 import { api } from '../../lib/api'
 import { WebSocketEvent } from '../../types'
-import { toast } from '../use-toast'
+import { toast } from '../../hooks/use-toast'
 
 export const useWebSocket = (enabled: boolean = true) => {
   const [isConnected, setIsConnected] = useState(false)
@@ -13,7 +13,7 @@ export const useWebSocket = (enabled: boolean = true) => {
   const maxReconnectAttempts = 5
 
   const connect = () => {
-    const token = api.getToken()
+    const token = api.getToken() // Now this method exists
     if (!token || !enabled) return
 
     const wsUrl = `${process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001'}/websocket?token=${token}`
@@ -32,7 +32,7 @@ export const useWebSocket = (enabled: boolean = true) => {
           const data: WebSocketEvent = JSON.parse(event.data)
           setLastMessage(data)
           
-          // Handle different event types
+          // Handle different event types with working toast methods
           switch (data.event) {
             case 'booking_status_update':
               toast.info(`Booking ${data.data.bookingId} status updated: ${data.data.status}`)
@@ -58,7 +58,6 @@ export const useWebSocket = (enabled: boolean = true) => {
         console.log('WebSocket disconnected')
         setIsConnected(false)
         
-        // Attempt to reconnect if not max attempts reached
         if (reconnectAttempts.current < maxReconnectAttempts && enabled) {
           reconnectAttempts.current++
           const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 30000)
@@ -112,7 +111,6 @@ export const useWebSocket = (enabled: boolean = true) => {
     }
   }, [enabled])
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       disconnect()

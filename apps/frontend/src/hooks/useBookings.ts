@@ -1,10 +1,10 @@
 // apps/frontend/src/hooks/useBookings.ts
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { apiClient } from '../lib/api';
+import { api } from '../lib/api'; // Changed from apiClient to api
 
 export const useCreateBooking = () => {
   return useMutation({
-    mutationFn: apiClient.createBooking,
+    mutationFn: (bookingData) => api.post('/api/bookings', bookingData),
     onSuccess: () => {
       // Handle success - navigate to success page
     },
@@ -17,6 +17,6 @@ export const useCreateBooking = () => {
 export const useMyBookings = () => {
   return useQuery({
     queryKey: ['bookings'],
-    queryFn: apiClient.getMyBookings,
+    queryFn: () => api.get('/api/bookings/my'),
   });
 };

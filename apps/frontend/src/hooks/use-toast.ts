@@ -131,8 +131,8 @@ function useToast() {
   };
 }
 
-// Export a function version of toast for use outside components
-function toast(props: Omit<ToasterToast, "id">) {
+// Base toast function
+function baseToast(props: Omit<ToasterToast, "id">) {
   const id = genId();
   
   dispatch({
@@ -149,5 +149,32 @@ function toast(props: Omit<ToasterToast, "id">) {
     dismiss: () => dispatch({ type: "DISMISS_TOAST", toastId: id }),
   };
 }
+
+// Helper methods for different toast types
+const toast = Object.assign(baseToast, {
+  success: (message: string) => baseToast({
+    title: "Success",
+    description: message,
+    variant: "default" as const,
+  }),
+  
+  error: (message: string) => baseToast({
+    title: "Error",
+    description: message,
+    variant: "destructive" as const,
+  }),
+  
+  info: (message: string) => baseToast({
+    title: "Info",
+    description: message,
+    variant: "default" as const,
+  }),
+  
+  warning: (message: string) => baseToast({
+    title: "Warning",
+    description: message,
+    variant: "default" as const,
+  }),
+});
 
 export { useToast, toast };

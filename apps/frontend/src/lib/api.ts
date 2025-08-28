@@ -1,5 +1,5 @@
+// lib/api.ts
 import axios, { AxiosInstance } from 'axios'
-import { useAuth } from '@clerk/nextjs'
 
 class ApiClient {
   private client: AxiosInstance
@@ -19,7 +19,7 @@ class ApiClient {
   private setupInterceptors() {
     // Request interceptor - add auth token
     this.client.interceptors.request.use((config) => {
-      const token = localStorage.getItem('clerk-token')
+      const token = this.getToken()
       if (token) {
         config.headers.Authorization = `Bearer ${token}`
       }
@@ -34,6 +34,12 @@ class ApiClient {
         return Promise.reject(error.response?.data || error)
       }
     )
+  }
+
+  // Add the missing getToken method
+  getToken(): string | null {
+    if (typeof window === 'undefined') return null
+    return localStorage.getItem('clerk-token')
   }
 
   async get<T>(url: string, params?: any): Promise<T> {
