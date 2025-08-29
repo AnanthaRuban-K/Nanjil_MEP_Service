@@ -1,66 +1,84 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-import { i18n } from '../frontend/src/lib/i18n/config';
+import { authMiddleware } from '@clerk/nextjs/server'
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 
-function getLocale(request: NextRequest): string {
-  // Check URL pathname for locale
-  const pathname = request.nextUrl.pathname;
-  const pathnameIsMissingLocale = i18n.locales.every(
-    (locale) => !pathname.startsWith(`/${locale}/`) && pathname !== `/${locale}`
-  );
-
-  // Check cookies or headers for preferred locale
-  const cookieLocale = request.cookies.get('locale')?.value;
-  const acceptLanguage = request.headers.get('accept-language');
+export default authMiddleware({
+  // Public routes that don't require authentication
+  publicRoutes: [
+    '/',
+    '/contact',
+    '/sign-in(.*)',
+    '/sign-up(.*)',
+    '/api/webhooks(.*)',
+    '/api/public(.*)'
+  ],
   
-  if (cookieLocale && i18n.locales.includes(cookieLocale as any)) {
-    return cookieLocale;
-  }
-  
-  // Default to Tamil for Indian users
-  if (acceptLanguage?.includes('ta') || acceptLanguage?.includes('in')) {
-    return 'tamil';
-  }
-  
-  return i18n.defaultLocale;
-}
+  // Routes that are ignored by auth middleware
+  ignoredRoutes: [
+    '/api/health',
+    '/_next(.*)',
+    '/favicon.ico',
+    '/sitemap.xml',
+    '/robots.txt'
+  ],
 
-export function middleware(request: NextRequest) {
-  const pathname = request.nextUrl.pathname;
-  
-  // Skip middleware for API routes, _next, and static files
-  if (
-    pathname.startsWith('/api/') ||
-    pathname.startsWith('/_next/') ||
-    pathname.includes('.')
-  ) {
-    return NextResponse.next();
-  }
-
-  const pathnameIsMissingLocale = i18n.locales.every(
-    (locale) => !pathname.startsWith(`/${locale}/`) && pathname !== `/${locale}`
-  );
-
-  // Redirect if there is no locale
-  if (pathnameIsMissingLocale) {
-    const locale = getLocale(request);
-    const response = NextResponse.redirect(
-      new URL(`/${locale}${pathname}`, request.url)
-    );
+  // Custom logic after Clerk auth
+  afterAuth(auth, req, evt) {
+    // Handle locale redirection for non-API routes
+    if (!req.nextUrl.pathname.startsWith('/api/') && 
+        !req.nextUrl.pathname.startsWith('/_next/')) {
+      return handleLocaleRedirection(req)
+    }
     
-    // Set locale cookie
-    response.cookies.set('locale', locale, { path: '/' });
-    return response;
+    // Handle admin routes
+    if (req.nextUrl.pathname.startsWith('/admin/') && 
+        req.nextUrl.pathname !== '/admin/login') {
+      if (!auth.userId) {
+        return NextResponse.redirect(new URL('/admin/login', req.url))
+      }
+    }
+    
+    return NextResponse.next()
+  }
+})
+
+// Locale handling function
+function handleLocaleRedirection(request: NextRequest) {
+  const pathname = request.nextUrl.pathname
+  
+  // Skip if already has locale or is a special path
+  if (pathname.startsWith('/ta/') || 
+      pathname.startsWith('/en/') ||
+      pathname === '/ta' || 
+      pathname === '/en') {
+    return NextResponse.next()
   }
 
-  return NextResponse.next();
+  // Determine locale
+  const cookieLocale = request.cookies.get('locale')?.value
+  const acceptLanguage = request.headers.get('accept-language')
+  
+  let locale = 'ta' // Default to Tamil
+  
+  if (cookieLocale === 'en' || cookieLocale === 'ta') {
+    locale = cookieLocale
+  } else if (acceptLanguage?.includes('en') && !acceptLanguage?.includes('ta')) {
+    locale = 'en'
+  }
+
+  // Redirect with locale
+  const response = NextResponse.redirect(
+    new URL(`/${locale}${pathname}`, request.url)
+  )
+  
+  response.cookies.set('locale', locale, { path: '/' })
+  return response
 }
 
 export const config = {
   matcher: [
-    // Skip all internal paths (_next)
-    '/((?!_next|api|favicon.ico|sitemap.xml|robots.txt).*)',
-    // Optional: only run on root (/) URL
-    // '/'
-  ],
-};
+    '/((?!.+\\.[\\w]+$|_next).*)',
+    '/',
+    '/(api|trpc)(.*)'
+  ]
+}

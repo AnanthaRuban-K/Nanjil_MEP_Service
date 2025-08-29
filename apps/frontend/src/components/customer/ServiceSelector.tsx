@@ -12,13 +12,13 @@ import type { ServiceType } from '../../types';
 interface ServiceOption {
   type: ServiceType;
   icon: React.ReactNode;
-  titleTamil: string;
-  titleEnglish: string;
-  descriptionTamil: string;
-  descriptionEnglish: string;
+  titleTa: string;
+  titleEn: string;
+  descriptionTa: string;
+  descriptionEn: string;
   examples: {
-    tamil: string[];
-    english: string[];
+    ta: string[];
+    en: string[];
   };
   bgColor: string;
   iconBg: string;
@@ -34,13 +34,13 @@ export const ServiceSelector: React.FC = () => {
     {
       type: 'electrical',
       icon: <Zap className="w-16 h-16 text-white" />,
-      titleTamil: 'மின்சாரம்',
-      titleEnglish: 'ELECTRICAL',
-      descriptionTamil: 'மின் சம்பந்தமான அனைத்து பணிகள்',
-      descriptionEnglish: 'All electrical related work',
+      titleTa: 'மின்சாரம்',
+      titleEn: 'ELECTRICAL',
+      descriptionTa: 'மின் சம்பந்தமான அனைத்து பணிகள்',
+      descriptionEn: 'All electrical related work',
       examples: {
-        tamil: ['விசிறி', 'விளக்கு', 'சுவிட்ச்', 'வயரிங்'],
-        english: ['Fan', 'Lights', 'Switch', 'Wiring']
+        ta: ['விசிறி', 'விளக்கு', 'சுவிட்ச்', 'வயரிங்'],
+        en: ['Fan', 'Lights', 'Switch', 'Wiring']
       },
       bgColor: 'from-electrical-50 to-yellow-50',
       iconBg: 'bg-electrical-500',
@@ -50,13 +50,13 @@ export const ServiceSelector: React.FC = () => {
     {
       type: 'plumbing',
       icon: <Droplets className="w-16 h-16 text-white" />,
-      titleTamil: 'குழாய்',
-      titleEnglish: 'PLUMBING',
-      descriptionTamil: 'தண்ணீர் சம்பந்தமான அனைத்து பணிகள்',
-      descriptionEnglish: 'All water related work',
+      titleTa: 'குழாய்',
+      titleEn: 'PLUMBING',
+      descriptionTa: 'தண்ணீர் சம்பந்தமான அனைத்து பணிகள்',
+      descriptionEn: 'All water related work',
       examples: {
-        tamil: ['குழாய்', 'கழிவறை', 'லீக்கேஜ்', 'டேங்கி'],
-        english: ['Pipe', 'Toilet', 'Leakage', 'Tank']
+        ta: ['குழாய்', 'கழிவறை', 'லீக்கேஜ்', 'டேங்கி'],
+        en: ['Pipe', 'Toilet', 'Leakage', 'Tank']
       },
       bgColor: 'from-plumbing-50 to-blue-50',
       iconBg: 'bg-plumbing-500',
@@ -120,16 +120,16 @@ export const ServiceSelector: React.FC = () => {
                     {service.icon}
                   </div>
                   <h2 className={`text-3xl font-black mb-2 ${language === 'ta' ? 'font-tamil' : 'font-english'}`}>
-                    {language === 'ta' ? service.titleTamil : service.titleEnglish}
+                    {language === 'ta' ? service.titleTa : service.titleEn}
                   </h2>
                   <p className={`text-gray-600 ${language === 'ta' ? 'font-tamil' : 'font-english'}`}>
-                    {language === 'ta' ? service.descriptionTamil : service.descriptionEnglish}
+                    {language === 'ta' ? service.descriptionTa : service.descriptionEn}
                   </p>
                 </div>
 
                 {/* Service Examples */}
                 <div className="grid grid-cols-2 gap-3 mb-6">
-                  {(language === 'ta' ? service.examples.tamil : service.examples.english).map((example, index) => (
+                  {(language === 'ta' ? service.examples.ta : service.examples.en).map((example, index) => (
                     <div key={index} className="bg-white rounded-lg p-3 text-center shadow-soft">
                       <span className={`font-medium text-gray-800 ${language === 'ta' ? 'font-tamil' : 'font-english'}`}>
                         {example}

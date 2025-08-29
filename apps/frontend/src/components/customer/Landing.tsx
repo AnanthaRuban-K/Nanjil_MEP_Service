@@ -1,5 +1,8 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { SignInButton, SignUpButton, SignedIn, SignedOut } from '@clerk/nextjs';
 import { 
   Phone, 
   MapPin, 
@@ -11,16 +14,16 @@ import {
   Star, 
   Clock, 
   Users,
-  Fan,
-  Lightbulb,
   Droplets,
-  Settings,
-  CheckCircle,
   ArrowRight,
-  MessageCircle
+  MessageCircle,
+  LogOut,
+  User,
+  Shield
 } from 'lucide-react';
+import { useAuth } from '../../hooks/useAuth'; // Your existing auth hook
 
-// Types
+// Types and Interfaces
 type Language = 'ta' | 'en';
 type ServiceType = 'electrical' | 'plumbing';
 
@@ -48,17 +51,23 @@ interface ServiceCard {
 // Main Component
 const LandingPage: React.FC = () => {
   const router = useRouter();
+  const { user, isLoading, isSignedIn, isAdmin, logout, goToDashboard } = useAuth();
   const [language, setLanguage] = useState<Language>('ta');
   const [location, setLocation] = useState<Location | null>(null);
-  const [isListening, setIsListening] = useState(false);
+  const [isListening, setIsListening] = useState<boolean>(false);
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
-  const [isClient, setIsClient] = useState(false);
+  const [isClient, setIsClient] = useState<boolean>(false);
 
   // Initialize client-side only
   useEffect(() => {
     setIsClient(true);
     setCurrentTime(new Date());
-  }, []);
+    
+    // Set user's preferred language if available
+    if (user?.language) {
+      setLanguage(user.language);
+    }
+  }, [user]);
 
   // Update time every minute (client-side only)
   useEffect(() => {
@@ -85,7 +94,6 @@ const LandingPage: React.FC = () => {
           });
         },
         () => {
-          // Default to Nagercoil
           setLocation({
             lat: 8.1778,
             lng: 77.4362,
@@ -102,12 +110,10 @@ const LandingPage: React.FC = () => {
       title: "நாஞ்சில் MEP சேவை",
       subtitle: "மின்சாரம் • குழாய் • அவசர சேவை",
       tagline: "உங்கள் வீட்டின் நம்பகமான சேவை கூட்டாளர்",
-      greeting: () => {
-        if (!currentTime) return language === 'ta' ? 'வணக்கம்' : 'Hello';
+      greeting: (): string => {
+        if (!currentTime) return 'வணக்கம்';
         const hour = currentTime.getHours();
-        return hour < 12 ? (language === 'ta' ? 'காலை வணக்கம்' : 'Good Morning') : 
-               hour < 18 ? (language === 'ta' ? 'மதிய வணக்கம்' : 'Good Afternoon') : 
-                          (language === 'ta' ? 'மாலை வணக்கம்' : 'Good Evening');
+        return hour < 12 ? 'காலை வணக்கம்' : hour < 18 ? 'மதிய வணக்கம்' : 'மாலை வணக்கம்';
       },
       whichService: "எந்த சேவை வேண்டும்?",
       bookService: "சேவை பதிவு செய்க",
@@ -143,13 +149,22 @@ const LandingPage: React.FC = () => {
       happyCustomers: "திருப்தியான வாடிக்கையாளர்கள்",
       reviews: "மதிப்பீடுகள்",
       trustedPartner: "நம்பகமான சேவை கூட்டாளர்",
-      servingAreas: "நாகர்கோவில் மற்றும் சுற்றுப்புற பகுতிகளில் சேவை"
+      servingAreas: "நாகர்கோவில் மற்றும் சுற்றுப்புற பகுதிகளில் சேவை",
+      welcome: "வணக்கம்",
+      logout: "வெளியேறு",
+      dashboard: "கட்டுப்பாட்டு பலகை",
+      login: "உள்நுழை",
+      signup: "பதிவு செய்",
+      bookNow: "இப்போது பதிவு செய்",
+      loginToBook: "பதிவுக்கு உள்நுழையவும்",
+      loginRequired: "உள்நுழைவு தேவை",
+      getStarted: "தொடங்கவும்"
     },
     en: {
       title: "Nanjil MEP Service",
       subtitle: "Electrical • Plumbing • Emergency Service",
       tagline: "Your Home's Trusted Service Partner",
-      greeting: () => {
+      greeting: (): string => {
         if (!currentTime) return 'Hello';
         const hour = currentTime.getHours();
         return hour < 12 ? 'Good Morning' : hour < 18 ? 'Good Afternoon' : 'Good Evening';
@@ -188,7 +203,16 @@ const LandingPage: React.FC = () => {
       happyCustomers: "Happy Customers",
       reviews: "Reviews",
       trustedPartner: "Trusted Service Partner",
-      servingAreas: "Serving Nagercoil and surrounding areas"
+      servingAreas: "Serving Nagercoil and surrounding areas",
+      welcome: "Welcome",
+      logout: "Logout",
+      dashboard: "Dashboard",
+      login: "Login",
+      signup: "Sign Up",
+      bookNow: "Book Now",
+      loginToBook: "Login to Book",
+      loginRequired: "Login required",
+      getStarted: "Get Started"
     }
   };
 
@@ -249,12 +273,12 @@ const LandingPage: React.FC = () => {
     }
   ];
 
-  // Event handlers
-  const handleLanguageToggle = () => {
+  // Event handlers with proper typing
+  const handleLanguageToggle = (): void => {
     setLanguage(language === 'ta' ? 'en' : 'ta');
   };
 
-  const handleEmergencyCall = () => {
+  const handleEmergencyCall = (): void => {
     const confirmed = window.confirm(
       language === 'ta' 
         ? 'அவசர சேவைக்கு அழைக்கவா?\n1800-NANJIL (9876500000)'
@@ -265,7 +289,7 @@ const LandingPage: React.FC = () => {
     }
   };
 
-  const handleWhatsApp = () => {
+  const handleWhatsApp = (): void => {
     const message = language === 'ta' 
       ? 'நமஸ்கார், எனக்கு அவசர சேவை தேவை. தயவுசெய்து தொடர்பு கொள்ளவும்.'
       : 'Hello, I need emergency service. Please contact me.';
@@ -273,7 +297,9 @@ const LandingPage: React.FC = () => {
     window.open(whatsappUrl, '_blank');
   };
 
-  const handleVoiceInput = () => {
+  const handleVoiceInput = (): void => {
+    if (!isClient) return;
+    
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
       alert(language === 'ta' ? 'குரல் அடையாளம் ஆதரிக்கப்படவில்லை' : 'Voice recognition not supported');
       return;
@@ -292,22 +318,26 @@ const LandingPage: React.FC = () => {
       const transcript = event.results[0][0].transcript.toLowerCase();
       console.log('Voice input:', transcript);
       
-      // Voice command routing
+      // Voice command routing with auth check
       if (transcript.includes('electrical') || transcript.includes('மின்சாரம்') || transcript.includes('விசிறி') || transcript.includes('fan') || transcript.includes('light')) {
-        router.push('/services?type=electrical');
+        handleServiceSelect('electrical');
       } else if (transcript.includes('plumbing') || transcript.includes('குழாய்') || transcript.includes('தண்ணீர்') || transcript.includes('water') || transcript.includes('pipe')) {
-        router.push('/services?type=plumbing');  
+        handleServiceSelect('plumbing');  
       } else if (transcript.includes('emergency') || transcript.includes('அவசரம்') || transcript.includes('urgent')) {
         router.push('/contact?emergency=true');
       } else if (transcript.includes('booking') || transcript.includes('பதிவு') || transcript.includes('book')) {
-        router.push('/bookings');
+        handleNavigateToBookings();
       } else if (transcript.includes('product') || transcript.includes('பொருட்கள்') || transcript.includes('buy')) {
-        router.push('/products');
+        handleNavigateToProducts();
       } else if (transcript.includes('contact') || transcript.includes('தொடர்பு') || transcript.includes('call')) {
         router.push('/contact');
       } else {
-        // If no specific command, go to services page
-        router.push('/services');
+        if (!isSignedIn) {
+          // Navigate to sign-in page
+          router.push('/sign-in');
+        } else {
+          router.push('/services');
+        }
       }
     };
 
@@ -316,36 +346,58 @@ const LandingPage: React.FC = () => {
     recognition.start();
   };
 
-  const handleServiceSelect = (serviceType: ServiceType) => {
-    // Navigate to services page with service type parameter
-    router.push(`/services?type=${serviceType}`);
+  // Auth-aware navigation handlers
+  const handleServiceSelect = (serviceType: ServiceType): void => {
+    if (!isSignedIn) {
+      router.push('/sign-in?redirect_url=' + encodeURIComponent(`/services?type=${serviceType}`));
+    } else {
+      router.push(`/services?type=${serviceType}`);
+    }
   };
 
-  const handleEmergencyService = () => {
-    // For emergency, go directly to contact with emergency flag
-    router.push('/contact?emergency=true');
+  const handleNavigateToBookings = (): void => {
+    if (!isSignedIn) {
+      router.push('/sign-in?redirect_url=' + encodeURIComponent('/bookings'));
+    } else {
+      router.push('/bookings');
+    }
   };
 
-  const handleNavigateToBookings = () => {
-    router.push('/bookings');
+  const handleNavigateToProducts = (): void => {
+    if (!isSignedIn) {
+      router.push('/sign-in?redirect_url=' + encodeURIComponent('/products'));
+    } else {
+      router.push('/products');
+    }
   };
 
-  const handleNavigateToProducts = () => {
-    router.push('/products');
-  };
-
-  const handleNavigateToContact = () => {
+  const handleNavigateToContact = (): void => {
     router.push('/contact');
   };
 
-  const handleStartBookingFlow = () => {
-    // Start the booking flow from services selection
-    router.push('/services');
+  const handleAdminAccess = (): void => {
+    if (isAdmin()) {
+      router.push('/admin/dashboard');
+    } else {
+      router.push('/admin/login');
+    }
   };
+
+  // Show loading state while auth is initializing
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-lg text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 font-sans">
-      {/* Header */}
+      {/* Updated Header with Clerk Auth */}
       <header className="bg-white shadow-lg border-b-4 border-blue-500">
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
@@ -367,8 +419,9 @@ const LandingPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Controls */}
-            <div className="flex items-center space-x-2">
+            {/* Auth Controls */}
+            <div className="flex items-center space-x-3">
+              {/* Voice Button */}
               <button
                 onClick={handleVoiceInput}
                 disabled={isListening}
@@ -381,15 +434,69 @@ const LandingPage: React.FC = () => {
               >
                 <Mic className="w-5 h-5" />
               </button>
+
+              {/* Language Toggle */}
               <button
                 onClick={handleLanguageToggle}
-                className="flex items-center space-x-2 bg-blue-100 hover:bg-blue-200 px-4 py-2 rounded-xl transition-colors"
+                className="flex items-center space-x-2 bg-blue-100 hover:bg-blue-200 px-3 py-2 rounded-xl transition-colors"
               >
-                <Globe className="w-5 h-5 text-blue-600" />
+                <Globe className="w-4 h-4 text-blue-600" />
                 <span className="font-bold text-blue-800">
                   {language === 'ta' ? 'EN' : 'தமிழ்'}
                 </span>
               </button>
+
+              {/* Clerk Auth Section */}
+              <SignedIn>
+                <div className="flex items-center space-x-2">
+                  {/* Welcome Message */}
+                  <span className="text-sm text-gray-600 hidden md:block">
+                    {currentT.welcome}, {user?.name}
+                  </span>
+                  
+                  {/* Dashboard Button */}
+                  <button
+                    onClick={goToDashboard}
+                    className="bg-green-100 hover:bg-green-200 text-green-800 px-3 py-2 rounded-xl font-medium transition-colors flex items-center space-x-1"
+                  >
+                    <User className="w-4 h-4" />
+                    <span className="hidden md:block">{currentT.dashboard}</span>
+                  </button>
+
+                  {/* Admin Access */}
+                  {isAdmin() && (
+                    <button
+                      onClick={handleAdminAccess}
+                      className="bg-purple-100 hover:bg-purple-200 text-purple-800 px-3 py-2 rounded-xl font-medium transition-colors"
+                    >
+                      <Shield className="w-4 h-4" />
+                    </button>
+                  )}
+
+                  {/* Logout */}
+                  <button
+                    onClick={logout}
+                    className="bg-red-100 hover:bg-red-200 text-red-800 px-3 py-2 rounded-xl transition-colors"
+                  >
+                    <LogOut className="w-4 h-4" />
+                  </button>
+                </div>
+              </SignedIn>
+
+              <SignedOut>
+                <div className="flex items-center space-x-2">
+                  <SignInButton mode="modal">
+                    <button className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-xl font-medium transition-colors">
+                      {currentT.login}
+                    </button>
+                  </SignInButton>
+                  <SignUpButton mode="modal">
+                    <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl font-bold transition-colors">
+                      {currentT.signup}
+                    </button>
+                  </SignUpButton>
+                </div>
+              </SignedOut>
             </div>
           </div>
 
@@ -482,7 +589,7 @@ const LandingPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Service cards */}
+        {/* Service cards with auth integration */}
         <section className="mb-16">
           <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
             {serviceCards.map((service) => (
@@ -494,8 +601,10 @@ const LandingPage: React.FC = () => {
                 <div className={`h-4 bg-gradient-to-r ${service.color}`}></div>
                 <div className="p-8">
                   <div className="flex items-center space-x-4 mb-6">
-                    <div className={`p-4 rounded-2xl bg-gradient-to-r ${service.color} bg-opacity-20 text-${service.id === 'electrical' ? 'yellow' : 'blue'}-600`}>
-                      {service.icon}
+                    <div className={`p-4 rounded-2xl bg-gradient-to-r ${service.color} bg-opacity-20`}>
+                      <div className={`${service.id === 'electrical' ? 'text-yellow-600' : 'text-blue-600'}`}>
+                        {service.icon}
+                      </div>
                     </div>
                     <div>
                       <h4 className="text-3xl font-black text-gray-800">
@@ -519,7 +628,7 @@ const LandingPage: React.FC = () => {
                   </div>
 
                   <div className={`text-center py-4 px-6 rounded-xl bg-gradient-to-r ${service.color} text-white font-bold text-lg group-hover:shadow-lg transition-shadow flex items-center justify-center space-x-2`}>
-                    <span>{language === 'ta' ? 'பதிவு செய்க' : 'Book Now'}</span>
+                    <span>{isSignedIn ? currentT.bookNow : currentT.getStarted}</span>
                     <ArrowRight className="w-5 h-5" />
                   </div>
                 </div>
@@ -574,7 +683,7 @@ const LandingPage: React.FC = () => {
           </div>
         </section>
 
-        {/* Quick actions */}
+        {/* Quick actions with auth integration */}
         <section className="mb-16">
           <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
             <button
@@ -583,6 +692,7 @@ const LandingPage: React.FC = () => {
             >
               <div className="text-4xl mb-3">📋</div>
               <div className="text-lg font-bold text-gray-800">{currentT.myBookings}</div>
+              {!isSignedIn && <div className="text-sm text-red-500 mt-1">{currentT.loginRequired}</div>}
             </button>
             <button
               onClick={handleNavigateToProducts}
@@ -590,6 +700,7 @@ const LandingPage: React.FC = () => {
             >
               <div className="text-4xl mb-3">🛒</div>
               <div className="text-lg font-bold text-gray-800">{currentT.products}</div>
+              {!isSignedIn && <div className="text-sm text-red-500 mt-1">{currentT.loginRequired}</div>}
             </button>
             <button
               onClick={handleNavigateToContact}
