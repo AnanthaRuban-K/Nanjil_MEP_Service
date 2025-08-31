@@ -9,7 +9,8 @@ WORKDIR /app
 # Copy package files
 COPY package.json package-lock.json* ./
 # Install dependencies including devDependencies (needed for build)
-RUN npm ci
+RUN npm install && npm run build
+
 
 # Rebuild the source code only when needed
 FROM base AS builder
