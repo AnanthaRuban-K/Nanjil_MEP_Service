@@ -7,7 +7,12 @@ import { useAuthStore } from '../../stores/auth-store';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
 import { ArrowLeft, Mic, MapPin } from 'lucide-react';
-import type { ContactInfo } from '../../types';
+
+interface ContactInfo {
+  name: string;
+  phone: string;
+  address: string;
+}
 
 export const CustomerInfoForm: React.FC = () => {
   const router = useRouter();
@@ -20,7 +25,6 @@ export const CustomerInfoForm: React.FC = () => {
   });
   const [isListening, setIsListening] = useState<'name' | 'address' | null>(null);
 
-  // Load existing booking data
   useEffect(() => {
     const savedData = sessionStorage.getItem('bookingData');
     if (savedData) {
@@ -61,14 +65,8 @@ export const CustomerInfoForm: React.FC = () => {
       handleInputChange(field, transcript);
     };
 
-    recognition.onerror = () => {
-      setIsListening(null);
-    };
-
-    recognition.onend = () => {
-      setIsListening(null);
-    };
-
+    recognition.onerror = () => setIsListening(null);
+    recognition.onend = () => setIsListening(null);
     recognition.start();
   };
 
@@ -76,9 +74,8 @@ export const CustomerInfoForm: React.FC = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          // In a real app, you'd reverse geocode this to get the address
-          const locationText = `Lat: ${position.coords.latitude.toFixed(6)}, Lng: ${position.coords.longitude.toFixed(6)}`;
-          handleInputChange('address', formData.address + (formData.address ? ', ' : '') + locationText);
+          const locationText = `${formData.address}, Lat: ${position.coords.latitude.toFixed(6)}, Lng: ${position.coords.longitude.toFixed(6)}`;
+          handleInputChange('address', locationText);
         },
         (error) => {
           alert(language === 'ta' 
@@ -113,7 +110,6 @@ export const CustomerInfoForm: React.FC = () => {
   const handleNext = () => {
     if (!validateForm()) return;
 
-    // Save to session storage and navigate
     const savedData = sessionStorage.getItem('bookingData');
     const bookingData = savedData ? JSON.parse(savedData) : {};
     
@@ -129,26 +125,18 @@ export const CustomerInfoForm: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
       <div className="max-w-2xl mx-auto p-4">
-        {/* Header */}
         <div className="flex items-center justify-between mb-8 pt-4">
-          <Button
-            variant="ghost"
-            onClick={() => router.back()}
-            className="flex items-center gap-2"
-          >
+          <Button variant="ghost" onClick={() => router.back()} className="flex items-center gap-2">
             <ArrowLeft className="w-4 h-4" />
-            <span className={language === 'ta' ? 'font-tamil' : 'font-english'}>
-              {language === 'ta' ? 'பின்னால்' : 'Back'}
-            </span>
+            <span>{language === 'ta' ? 'பின்னால்' : 'Back'}</span>
           </Button>
         </div>
 
-        {/* Title */}
         <div className="text-center mb-8">
-          <h1 className={`text-3xl font-black mb-4 ${language === 'ta' ? 'font-tamil' : 'font-english'}`}>
+          <h1 className="text-3xl font-black mb-4">
             {language === 'ta' ? 'உங்கள் விபரங்கள்' : 'Your Details'}
           </h1>
-          <p className={`text-lg text-gray-600 ${language === 'ta' ? 'font-tamil' : 'font-english'}`}>
+          <p className="text-lg text-gray-600">
             {language === 'ta' 
               ? 'எங்கள் குழு உங்களை தொடர்பு கொள்ள'
               : 'For our team to contact you'
@@ -156,12 +144,10 @@ export const CustomerInfoForm: React.FC = () => {
           </p>
         </div>
 
-        {/* Form */}
         <Card className="mb-8">
           <div className="p-6 space-y-6">
-            {/* Name Field */}
             <div>
-              <label className={`block text-lg font-bold mb-2 ${language === 'ta' ? 'font-tamil' : 'font-english'}`}>
+              <label className="block text-lg font-bold mb-2">
                 {language === 'ta' ? 'பெயர் (Name):' : 'Name:'}
               </label>
               <div className="flex gap-2">
@@ -169,13 +155,8 @@ export const CustomerInfoForm: React.FC = () => {
                   type="text"
                   value={formData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
-                  placeholder={language === 'ta' 
-                    ? 'உங்கள் பெயர்'
-                    : 'Your Name'
-                  }
-                  className={`flex-1 px-4 py-3 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
-                    language === 'ta' ? 'font-tamil' : 'font-english'
-                  }`}
+                  placeholder={language === 'ta' ? 'உங்கள் பெயர்' : 'Your Name'}
+                  className="flex-1 px-4 py-3 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 />
                 <Button
                   variant="outline"
@@ -188,9 +169,8 @@ export const CustomerInfoForm: React.FC = () => {
               </div>
             </div>
 
-            {/* Phone Field */}
             <div>
-              <label className={`block text-lg font-bold mb-2 ${language === 'ta' ? 'font-tamil' : 'font-english'}`}>
+              <label className="block text-lg font-bold mb-2">
                 {language === 'ta' ? 'மொபைல் எண் (Mobile):' : 'Mobile Number:'}
               </label>
               <input
@@ -203,22 +183,16 @@ export const CustomerInfoForm: React.FC = () => {
               />
             </div>
 
-            {/* Address Field */}
             <div>
-              <label className={`block text-lg font-bold mb-2 ${language === 'ta' ? 'font-tamil' : 'font-english'}`}>
+              <label className="block text-lg font-bold mb-2">
                 {language === 'ta' ? 'முகவரி (Address):' : 'Address:'}
               </label>
               <div className="flex gap-2 mb-2">
                 <textarea
                   value={formData.address}
                   onChange={(e) => handleInputChange('address', e.target.value)}
-                  placeholder={language === 'ta' 
-                    ? 'வீட்டு முகவரி'
-                    : 'House Address'
-                  }
-                  className={`flex-1 px-4 py-3 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 h-24 resize-none ${
-                    language === 'ta' ? 'font-tamil' : 'font-english'
-                  }`}
+                  placeholder={language === 'ta' ? 'வீட்டு முகவரி' : 'House Address'}
+                  className="flex-1 px-4 py-3 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 h-24 resize-none"
                 />
                 <div className="flex flex-col gap-2">
                   <Button
@@ -229,43 +203,17 @@ export const CustomerInfoForm: React.FC = () => {
                   >
                     <Mic className={`w-4 h-4 ${isListening === 'address' ? 'text-red-600' : ''}`} />
                   </Button>
-                  <Button
-                    variant="outline"
-                    onClick={getCurrentLocation}
-                    className="px-3"
-                  >
+                  <Button variant="outline" onClick={getCurrentLocation} className="px-3">
                     <MapPin className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
-              <p className={`text-sm text-gray-500 ${language === 'ta' ? 'font-tamil' : 'font-english'}`}>
-                {language === 'ta' 
-                  ? 'தெரு, பகुதி, முக்கிய அடையாளம் போன்றவை'
-                  : 'Street, area, landmark etc.'
-                }
-              </p>
-            </div>
-
-            {/* Information Note */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className={`text-sm text-blue-700 ${language === 'ta' ? 'font-tamil' : 'font-english'}`}>
-                {language === 'ta' 
-                  ? 'உங்கள் தகவல்கள் பாதுகாப்பாக வைக்கப்படும். சேவைக்கு மட்டுமே பயன்படுத்தப்படும்.'
-                  : 'Your information will be kept secure and used only for service purposes.'
-                }
-              </p>
             </div>
           </div>
         </Card>
 
-        {/* Next Button */}
-        <Button
-          onClick={handleNext}
-          size="lg"
-          className="w-full"
-          disabled={!formData.name || !formData.phone || !formData.address}
-        >
-          <span className={`text-lg font-bold ${language === 'ta' ? 'font-tamil' : 'font-english'}`}>
+        <Button onClick={handleNext} size="lg" className="w-full" disabled={!formData.name || !formData.phone || !formData.address}>
+          <span className="text-lg font-bold">
             {language === 'ta' ? 'அடுத்து: நேரம் தேர்வு →' : 'Next: Select Time →'}
           </span>
         </Button>

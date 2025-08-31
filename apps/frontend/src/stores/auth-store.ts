@@ -1,70 +1,63 @@
 // apps/frontend/src/stores/auth-store.ts
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import type { User, UserPreferences, Language } from '../types';
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
+
+interface User {
+  id: string
+  name: string
+  phone?: string
+  address?: string
+  email?: string
+}
 
 interface AuthState {
-  user: User | null;
-  isAdmin: boolean;
-  language: Language;
-  location: any | null;   // 👈 இங்கு add பண்ணணும்
-  isLoading: boolean;
-
+  user: User | null
+  isAuthenticated: boolean
+  language: 'ta' | 'en'
+  
   // Actions
-  setUser: (user: User | null) => void;
-  setLanguage: (language: Language) => void;
-  setLocation: (location: any | null) => void;
-  setLoading: (loading: boolean) => void;
-  logout: () => void;
-  updateProfile: (updates: Partial<User>) => void;
+  login: (user: User) => void
+  logout: () => void
+  setLanguage: (language: 'ta' | 'en') => void
+  updateProfile: (updates: Partial<User>) => void
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       user: null,
-      isAdmin: false,
-      language: 'ta',
-      location: null,   // 👈 இது stateல வேண்டும்
-      isLoading: false,
-
-      setUser: (user) => set({ 
-        user, 
-        isAdmin: user?.role === 'admin',
-        language: user?.language || 'ta' 
-      }),
+      isAuthenticated: false,
+      language: 'ta', // Default to Tamil for local users
       
-      setLanguage: (language) => {
-        set({ language });
-        const { user } = get();
-        if (user) {
-          set({ user: { ...user, language } });
-        }
+      login: (user: User) => {
+        set({ user, isAuthenticated: true })
       },
       
-      setLocation: (location) => set({ location }),
+      logout: () => {
+        set({ user: null, isAuthenticated: false })
+        // Clear session storage
+        sessionStorage.removeItem('bookingData')
+        sessionStorage.removeItem('completedBooking')
+      },
       
-      setLoading: (isLoading) => set({ isLoading }),
+      setLanguage: (language: 'ta' | 'en') => {
+        set({ language })
+      },
       
-      logout: () => set({ 
-        user: null, 
-        isAdmin: false, 
-        location: null 
-      }),
-      
-      updateProfile: (updates) => {
-        const { user } = get();
-        if (user) {
-          set({ user: { ...user, ...updates } });
+      updateProfile: (updates: Partial<User>) => {
+        const currentUser = get().user
+        if (currentUser) {
+          set({ user: { ...currentUser, ...updates } })
         }
       },
     }),
     {
-      name: 'nanjil-auth-store',
+      name: 'auth-storage',
       partialize: (state) => ({
+        user: state.user,
+        isAuthenticated: state.isAuthenticated,
         language: state.language,
-        location: state.location,
       }),
     }
   )
-);
+)

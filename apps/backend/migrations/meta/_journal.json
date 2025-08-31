@@ -1,0 +1,27 @@
+{
+  "version": "5",
+  "dialect": "pg",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1756631865200,
+      "tag": "0000_shocking_adam_warlock",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1756633338229,
+      "tag": "0001_sharp_colleen_wing",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1756658095892,
+      "tag": "0002_thin_vin_gonzales",
+      "breakpoints": true
+    }
+  ]
+}

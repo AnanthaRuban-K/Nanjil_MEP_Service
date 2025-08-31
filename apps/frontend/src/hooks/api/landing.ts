@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { api } from '../../lib/api'
+import { apiClient } from '../../lib/api'
 import { Service, ServiceArea, DashboardStats } from '../../types/landing-page'
 
 // Get all services for landing page
@@ -7,7 +7,7 @@ export const useServices = () => {
   return useQuery({
     queryKey: ['services'],
     queryFn: async (): Promise<Service[]> => {
-      const response = await api.get<{data: Service[]}>('/api/services')
+      const response = await apiClient.get('/api/services')
       return response.data || []
     },
     staleTime: 1000 * 60 * 10, // 10 minutes
@@ -22,7 +22,7 @@ export const useServiceAreas = (pincode?: string) => {
     queryKey: ['service-areas', pincode],
     queryFn: async (): Promise<ServiceArea[]> => {
       const url = pincode ? `/api/services/areas?pincode=${pincode}` : '/api/services/areas'
-      const response = await api.get<{data: ServiceArea[]}>(url)
+      const response = await apiClient.get(url)
       return response.data || []
     },
     staleTime: 1000 * 60 * 30, // 30 minutes
@@ -34,13 +34,10 @@ export const useServiceAvailability = (pincode?: string) => {
   return useQuery({
     queryKey: ['service-availability', pincode],
     queryFn: async (): Promise<{ available: boolean }> => {
-  if (!pincode) return { available: false }
-  const response = await api.get<{ data: { available: boolean } }>(
-    `/api/services/check-area?pincode=${pincode}`
-  )
-  return response.data
-},
-
+      if (!pincode) return { available: false }
+      const response = await apiClient.get(`/api/services/check-area?pincode=${pincode}`)
+      return response.data
+    },
     enabled: !!pincode,
     staleTime: 1000 * 60 * 5, // 5 minutes
   })
@@ -51,7 +48,7 @@ export const useDashboardStats = () => {
   return useQuery({
     queryKey: ['dashboard-stats'],
     queryFn: async (): Promise<DashboardStats> => {
-      const response = await api.get<{data: DashboardStats}>('/api/stats/public')
+      const response = await apiClient.get('/api/stats/public')
       return response.data || {
         totalCustomers: 500,
         totalBookings: 1200,

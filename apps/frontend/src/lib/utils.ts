@@ -39,3 +39,31 @@ export function getTamilTimeSlot(timeSlot: string): string {
   };
   return timeSlotMap[timeSlot] || timeSlot;
 }
+
+export function formatDistance(distanceInKm: number): string {
+  if (distanceInKm < 1) {
+    return `${Math.round(distanceInKm * 1000)}m`;
+  }
+  return `${distanceInKm.toFixed(1)}km`;
+}
+
+export function getStatusColor(status: string): string {
+  const colors = {
+    pending: 'text-yellow-600 bg-yellow-100 border-yellow-300',
+    confirmed: 'text-blue-600 bg-blue-100 border-blue-300',
+    'in-progress': 'text-purple-600 bg-purple-100 border-purple-300',
+    completed: 'text-green-600 bg-green-100 border-green-300',
+    cancelled: 'text-red-600 bg-red-100 border-red-300',
+    emergency: 'text-red-900 bg-red-200 border-red-400'
+  };
+  return colors[status as keyof typeof colors] || colors.pending;
+}
+
+export function getPriorityLevel(priority: string): number {
+  const levels = {
+    emergency: 3,
+    urgent: 2,
+    normal: 1
+  };
+  return levels[priority as keyof typeof levels] || 1;
+}

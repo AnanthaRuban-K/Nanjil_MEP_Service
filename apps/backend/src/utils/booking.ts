@@ -1,5 +1,5 @@
 import { db } from '../db/index'
-import { bookings } from '../db/schema'
+import { bookings } from '../db/schema/bookings'
 import { desc, like } from 'drizzle-orm'
 
 export async function generateBookingNumber(): Promise<string> {

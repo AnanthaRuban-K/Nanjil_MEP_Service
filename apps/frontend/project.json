@@ -1,42 +1,25 @@
 {
   "name": "frontend",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "apps/frontend/src",
   "projectType": "application",
+  "sourceRoot": "apps/frontend",
   "targets": {
     "build": {
       "executor": "@nx/next:build",
       "outputs": ["{options.outputPath}"],
       "defaultConfiguration": "production",
       "options": {
+        "root": "apps/frontend",
         "outputPath": "dist/apps/frontend"
-      },
-      "configurations": {
-        "development": {
-          "outputPath": "apps/frontend"
-        },
-        "production": {}
       }
     },
-    "dev": {
+    "serve": {
       "executor": "@nx/next:server",
       "defaultConfiguration": "development",
       "options": {
         "buildTarget": "frontend:build",
         "dev": true,
-        "dev": "ts-node src/index.ts",
-
-        "port": 3000
-      },
-      "configurations": {
-        "development": {
-          "buildTarget": "frontend:build:development",
-          "dev": true
-        },
-        "production": {
-          "buildTarget": "frontend:build:production",
-          "dev": false
-        }
+        "port": 3100
       }
     },
     "export": {
@@ -47,16 +30,9 @@
     },
     "test": {
       "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "outputs": ["{workspaceRoot}/coverage/{projectName}"],
       "options": {
-        "jestConfig": "apps/frontend/jest.config.ts",
-        "passWithNoTests": true
-      },
-      "configurations": {
-        "ci": {
-          "ci": true,
-          "coverageReporters": ["text"]
-        }
+        "jestConfig": "apps/frontend/jest.config.ts"
       }
     },
     "lint": {
@@ -67,5 +43,5 @@
       }
     }
   },
-  "tags": ["type:app", "scope:frontend"]
+  "tags": []
 }

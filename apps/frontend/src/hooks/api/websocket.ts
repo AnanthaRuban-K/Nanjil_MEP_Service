@@ -1,8 +1,19 @@
 // hooks/use-websocket.ts
 import { useEffect, useRef, useState } from 'react'
-import { api } from '../../lib/api'
 import { WebSocketEvent } from '../../types'
 import { toast } from '../../hooks/use-toast'
+
+// Helper function to get auth token (same logic as in api.ts)
+const getAuthToken = (): string => {
+  // For development
+  if (process.env.NODE_ENV === 'development') {
+    return 'test-token'
+  }
+  
+  // For production, get from Clerk or your auth provider
+  // return getClerkToken() or similar
+  return 'test-token'
+}
 
 export const useWebSocket = (enabled: boolean = true) => {
   const [isConnected, setIsConnected] = useState(false)
@@ -13,7 +24,7 @@ export const useWebSocket = (enabled: boolean = true) => {
   const maxReconnectAttempts = 5
 
   const connect = () => {
-    const token = api.getToken() // Now this method exists
+    const token = getAuthToken()
     if (!token || !enabled) return
 
     const wsUrl = `${process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001'}/websocket?token=${token}`
@@ -32,19 +43,35 @@ export const useWebSocket = (enabled: boolean = true) => {
           const data: WebSocketEvent = JSON.parse(event.data)
           setLastMessage(data)
           
-          // Handle different event types with working toast methods
+          // Handle different event types with proper toast usage
           switch (data.event) {
             case 'booking_status_update':
-              toast.info(`Booking ${data.data.bookingId} status updated: ${data.data.status}`)
+              toast({
+                title: 'Booking Updated',
+                description: `Booking ${data.data.bookingId} status updated: ${data.data.status}`,
+                variant: 'default'
+              })
               break
             case 'team_assigned':
-              toast.success(`Team assigned to your booking: ${data.data.team.name}`)
+              toast({
+                title: 'Team Assigned',
+                description: `Team assigned to your booking: ${data.data.team.name}`,
+                variant: 'default'
+              })
               break
             case 'new_booking':
-              toast.info(`New ${data.data.booking.priority} booking received`)
+              toast({
+                title: 'New Booking',
+                description: `New ${data.data.booking.priority} booking received`,
+                variant: 'default'
+              })
               break
             case 'emergency_alert':
-              toast.error(`EMERGENCY: ${data.data.booking.description}`)
+              toast({
+                title: 'EMERGENCY ALERT',
+                description: data.data.booking.description,
+                variant: 'destructive'
+              })
               break
             default:
               console.log('Unhandled WebSocket event:', data.event)

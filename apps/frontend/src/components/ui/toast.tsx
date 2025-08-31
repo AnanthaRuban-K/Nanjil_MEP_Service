@@ -32,12 +32,15 @@ const toastVariants = cva(
         default: "border bg-background text-foreground",
         destructive:
           "destructive border-destructive bg-destructive text-destructive-foreground",
+        success:
+          "border-green-500 bg-green-600 text-white", // ✅ new success style
       },
     },
     defaultVariants: {
       variant: "default",
     },
   }
+
 );
 
 const Toast = React.forwardRef<

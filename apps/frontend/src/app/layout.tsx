@@ -1,22 +1,29 @@
+'use client';
+
 import { Inter } from 'next/font/google';
 import { AuthProvider } from '../components/auth/AuthProvider';
 import { QueryProvider } from './providers/query-provider';
-
+import { QueryClient } from '@tanstack/react-query'
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import { useState } from 'react'
 import './global.css';
 import { Toaster } from '../components/ui/toaster';
 
 const inter = Inter({ subsets: ['latin'] });
 
-export const metadata = {
-  title: 'நாஞ்சில் MEP சேவை - Nanjil MEP Services',
-  description: 'நாகர்கோவிலில் மின்சாரம், குழாய் மற்றும் அவசர சேவைகள் - Electrical, Plumbing & Emergency Services in Nagercoil',
-};
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
+  const [queryClient] = useState(() => new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 60 * 1000, // 1 minute
+      },
+    },
+  }))
   return (
     <html lang="ta" className="h-full">
       <head>

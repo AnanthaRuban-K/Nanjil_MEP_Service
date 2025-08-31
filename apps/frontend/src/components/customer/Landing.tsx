@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { SignInButton, SignUpButton, SignedIn, SignedOut } from '@clerk/nextjs';
 import { 
@@ -19,9 +19,11 @@ import {
   MessageCircle,
   LogOut,
   User,
-  Shield
+  Shield,
+  Menu,
+  X
 } from 'lucide-react';
-import { useAuth } from '../../hooks/useAuth'; // Your existing auth hook
+import { useAuth } from '../../hooks/useAuth';
 
 // Types and Interfaces
 type Language = 'ta' | 'en';
@@ -55,66 +57,26 @@ const LandingPage: React.FC = () => {
   const [language, setLanguage] = useState<Language>('ta');
   const [location, setLocation] = useState<Location | null>(null);
   const [isListening, setIsListening] = useState<boolean>(false);
-  const [currentTime, setCurrentTime] = useState<Date | null>(null);
+  const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [isClient, setIsClient] = useState<boolean>(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
 
-  // Initialize client-side only
-  useEffect(() => {
-    setIsClient(true);
-    setCurrentTime(new Date());
-    
-    // Set user's preferred language if available
-    if (user?.language) {
-      setLanguage(user.language);
+  // Fixed: Move greeting function outside of translations to prevent re-creation
+  const getGreeting = useCallback((time: Date, lang: Language): string => {
+    const hour = time.getHours();
+    if (lang === 'ta') {
+      return hour < 12 ? 'காலை வணக்கம்' : hour < 18 ? 'மதிய வணக்கம்' : 'மாலை வணக்கம்';
+    } else {
+      return hour < 12 ? 'Good Morning' : hour < 18 ? 'Good Afternoon' : 'Good Evening';
     }
-  }, [user]);
+  }, []);
 
-  // Update time every minute (client-side only)
-  useEffect(() => {
-    if (!isClient) return;
-    
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 60000);
-    
-    return () => clearInterval(timer);
-  }, [isClient]);
-
-  // Get user location (client-side only)
-  useEffect(() => {
-    if (!isClient) return;
-    
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-            address: "நாகர்கோவில், தமிழ்நாடு"
-          });
-        },
-        () => {
-          setLocation({
-            lat: 8.1778,
-            lng: 77.4362,
-            address: "நாகர்கோவில், தமிழ்நாடு"
-          });
-        }
-      );
-    }
-  }, [isClient]);
-
-  // Translations
-  const t = {
+  // Fixed: Memoize translations to prevent re-creation
+  const translations = useMemo(() => ({
     ta: {
       title: "நாஞ்சில் MEP சேவை",
       subtitle: "மின்சாரம் • குழாய் • அவசர சேவை",
       tagline: "உங்கள் வீட்டின் நம்பகமான சேவை கூட்டாளர்",
-      greeting: (): string => {
-        if (!currentTime) return 'வணக்கம்';
-        const hour = currentTime.getHours();
-        return hour < 12 ? 'காலை வணக்கம்' : hour < 18 ? 'மதிய வணக்கம்' : 'மாலை வணக்கம்';
-      },
       whichService: "எந்த சேவை வேண்டும்?",
       bookService: "சேவை பதிவு செய்க",
       emergency: "அவசரம்",
@@ -128,8 +90,6 @@ const LandingPage: React.FC = () => {
       plumbing: "குழாய்",
       electricalDesc: "மின் சம்பந்தமான அனைத்து பணிகளும்",
       plumbingDesc: "தண்ணீர் மற்றும் குழாய் சம்பந்தமான பணிகளும்",
-      bookElectrical: "மின்சார சேவை பதிவு",
-      bookPlumbing: "குழாய் சேவை பதிவு",
       myBookings: "எனது பதிவுகள்",
       products: "பொருட்கள்",
       contact: "தொடர்பு",
@@ -158,17 +118,13 @@ const LandingPage: React.FC = () => {
       bookNow: "இப்போது பதிவு செய்",
       loginToBook: "பதிவுக்கு உள்நுழையவும்",
       loginRequired: "உள்நுழைவு தேவை",
-      getStarted: "தொடங்கவும்"
+      getStarted: "தொடங்கவும்",
+      menu: "மெனு"
     },
     en: {
       title: "Nanjil MEP Service",
       subtitle: "Electrical • Plumbing • Emergency Service",
       tagline: "Your Home's Trusted Service Partner",
-      greeting: (): string => {
-        if (!currentTime) return 'Hello';
-        const hour = currentTime.getHours();
-        return hour < 12 ? 'Good Morning' : hour < 18 ? 'Good Afternoon' : 'Good Evening';
-      },
       whichService: "Which service do you need?",
       bookService: "Book Service",
       emergency: "EMERGENCY",
@@ -182,8 +138,6 @@ const LandingPage: React.FC = () => {
       plumbing: "PLUMBING", 
       electricalDesc: "All electrical related services",
       plumbingDesc: "All water and plumbing services",
-      bookElectrical: "Book Electrical Service",
-      bookPlumbing: "Book Plumbing Service",
       myBookings: "My Bookings",
       products: "Products", 
       contact: "Contact",
@@ -212,12 +166,63 @@ const LandingPage: React.FC = () => {
       bookNow: "Book Now",
       loginToBook: "Login to Book",
       loginRequired: "Login required",
-      getStarted: "Get Started"
+      getStarted: "Get Started",
+      menu: "Menu"
     }
-  };
+  }), []);
+
+  const currentT = translations[language];
+
+  // Fixed: Initialize client-side only (removed user dependency)
+  useEffect(() => {
+    setIsClient(true);
+    setCurrentTime(new Date());
+  }, []);
+
+  // Fixed: Set language when user data loads (separate effect)
+  useEffect(() => {
+    if (user?.language && (user.language === 'ta' || user.language === 'en')) {
+      setLanguage(user.language as Language);
+    }
+  }, [user?.language]);
+
+  // Fixed: Update time every minute with proper cleanup
+  useEffect(() => {
+    if (!isClient) return;
+    
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000);
+    
+    return () => clearInterval(timer);
+  }, [isClient]);
+
+  // Fixed: Get user location (client-side only)
+  useEffect(() => {
+    if (!isClient) return;
+    
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+            address: "நாகர்கோவில், தமிழ்நாடு"
+          });
+        },
+        () => {
+          setLocation({
+            lat: 8.1778,
+            lng: 77.4362,
+            address: "நாகர்கோவில், தமிழ்நாடு"
+          });
+        }
+      );
+    }
+  }, [isClient]);
 
   // Helper functions for consistent formatting
-  const formatDate = (date: Date): string => {
+  const formatDate = useCallback((date: Date): string => {
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const months = ['January', 'February', 'March', 'April', 'May', 'June', 
                     'July', 'August', 'September', 'October', 'November', 'December'];
@@ -227,9 +232,9 @@ const LandingPage: React.FC = () => {
     const monthName = months[date.getMonth()];
     
     return `${dayName} ${day} ${monthName}`;
-  };
+  }, []);
 
-  const formatTime = (date: Date): string => {
+  const formatTime = useCallback((date: Date): string => {
     const hours = date.getHours();
     const minutes = date.getMinutes();
     const ampm = hours >= 12 ? 'PM' : 'AM';
@@ -237,18 +242,16 @@ const LandingPage: React.FC = () => {
     const displayMinutes = minutes.toString().padStart(2, '0');
     
     return `${displayHours}:${displayMinutes} ${ampm}`;
-  };
+  }, []);
 
-  const currentT = t[language];
-
-  // Service definitions
-  const serviceCards: ServiceCard[] = [
+  // Service definitions - memoized to prevent re-creation
+  const serviceCards = useMemo((): ServiceCard[] => [
     {
       id: 'electrical',
       type: 'electrical',
       name_ta: 'மின்சார சேவைகள்',
       name_en: 'Electrical Services',
-      icon: <Zap className="w-12 h-12" />,
+      icon: <Zap className="w-8 h-8 sm:w-10 lg:w-12" />,
       color: 'from-yellow-400 to-orange-500',
       services: {
         ta: ['விசிறி பழுது', 'மின்சார கம்பி', 'ஸ்விட்ச் வேலை', 'விளக்கு பழுது'],
@@ -262,7 +265,7 @@ const LandingPage: React.FC = () => {
       type: 'plumbing',
       name_ta: 'குழாய் சேவைகள்',
       name_en: 'Plumbing Services',
-      icon: <Droplets className="w-12 h-12" />,
+      icon: <Droplets className="w-8 h-8 sm:w-10 lg:w-12" />,
       color: 'from-blue-400 to-cyan-500',
       services: {
         ta: ['குழாய் பழுது', 'கழிவறை வேலை', 'லீக்கேஜ் சரி', 'தண்ணீர் டேங்கி'],
@@ -271,14 +274,14 @@ const LandingPage: React.FC = () => {
       description_ta: 'தண்ணீர் மற்றும் குழாய் சம்பந்தமான பணிகளும்',
       description_en: 'All water and plumbing services'
     }
-  ];
+  ], []);
 
   // Event handlers with proper typing
-  const handleLanguageToggle = (): void => {
-    setLanguage(language === 'ta' ? 'en' : 'ta');
-  };
+  const handleLanguageToggle = useCallback((): void => {
+    setLanguage(prevLanguage => prevLanguage === 'ta' ? 'en' : 'ta');
+  }, []);
 
-  const handleEmergencyCall = (): void => {
+  const handleEmergencyCall = useCallback((): void => {
     const confirmed = window.confirm(
       language === 'ta' 
         ? 'அவசர சேவைக்கு அழைக்கவா?\n1800-NANJIL (9876500000)'
@@ -287,17 +290,17 @@ const LandingPage: React.FC = () => {
     if (confirmed) {
       window.location.href = 'tel:+919876500000';
     }
-  };
+  }, [language]);
 
-  const handleWhatsApp = (): void => {
+  const handleWhatsApp = useCallback((): void => {
     const message = language === 'ta' 
       ? 'நமஸ்கார், எனக்கு அவசர சேவை தேவை. தயவுசெய்து தொடர்பு கொள்ளவும்.'
       : 'Hello, I need emergency service. Please contact me.';
     const whatsappUrl = `https://wa.me/919876500000?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
-  };
+  }, [language]);
 
-  const handleVoiceInput = (): void => {
+  const handleVoiceInput = useCallback((): void => {
     if (!isClient) return;
     
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
@@ -333,7 +336,6 @@ const LandingPage: React.FC = () => {
         router.push('/contact');
       } else {
         if (!isSignedIn) {
-          // Navigate to sign-in page
           router.push('/sign-in');
         } else {
           router.push('/services');
@@ -344,51 +346,51 @@ const LandingPage: React.FC = () => {
     recognition.onerror = () => setIsListening(false);
     recognition.onend = () => setIsListening(false);
     recognition.start();
-  };
+  }, [isClient, language, router, isSignedIn]);
 
   // Auth-aware navigation handlers
-  const handleServiceSelect = (serviceType: ServiceType): void => {
+  const handleServiceSelect = useCallback((serviceType: ServiceType): void => {
     if (!isSignedIn) {
       router.push('/sign-in?redirect_url=' + encodeURIComponent(`/services?type=${serviceType}`));
     } else {
       router.push(`/services?type=${serviceType}`);
     }
-  };
+  }, [isSignedIn, router]);
 
-  const handleNavigateToBookings = (): void => {
+  const handleNavigateToBookings = useCallback((): void => {
     if (!isSignedIn) {
       router.push('/sign-in?redirect_url=' + encodeURIComponent('/bookings'));
     } else {
       router.push('/bookings');
     }
-  };
+  }, [isSignedIn, router]);
 
-  const handleNavigateToProducts = (): void => {
+  const handleNavigateToProducts = useCallback((): void => {
     if (!isSignedIn) {
       router.push('/sign-in?redirect_url=' + encodeURIComponent('/products'));
     } else {
       router.push('/products');
     }
-  };
+  }, [isSignedIn, router]);
 
-  const handleNavigateToContact = (): void => {
+  const handleNavigateToContact = useCallback((): void => {
     router.push('/contact');
-  };
+  }, [router]);
 
-  const handleAdminAccess = (): void => {
+  const handleAdminAccess = useCallback((): void => {
     if (isAdmin()) {
       router.push('/admin/dashboard');
     } else {
       router.push('/admin/login');
     }
-  };
+  }, [isAdmin, router]);
 
   // Show loading state while auth is initializing
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+        <div className="text-center px-4">
+          <div className="animate-spin rounded-full h-20 w-20 sm:h-32 sm:w-32 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-4 text-lg text-gray-600">Loading...</p>
         </div>
       </div>
@@ -397,115 +399,180 @@ const LandingPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 font-sans">
-      {/* Updated Header with Clerk Auth */}
-      <header className="bg-white shadow-lg border-b-4 border-blue-500">
-        <div className="container mx-auto px-4 py-4">
+      {/* Mobile-Responsive Header */}
+      <header className="bg-white shadow-lg border-b-4 border-blue-500 sticky top-0 z-40">
+        <div className="container mx-auto px-4 py-3 sm:py-4">
           <div className="flex justify-between items-center">
-            {/* Logo */}
-            <div className="flex items-center space-x-3">
-              <div className="bg-gradient-to-r from-blue-600 to-green-600 p-3 rounded-xl">
+            {/* Logo - Mobile Optimized */}
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              <div className="bg-gradient-to-r from-blue-600 to-green-600 p-2 sm:p-3 rounded-xl">
                 <div className="flex space-x-1">
-                  <Zap className="w-6 h-6 text-yellow-300" />
-                  <Wrench className="w-6 h-6 text-white" />
+                  <Zap className="w-4 h-4 sm:w-6 sm:h-6 text-yellow-300" />
+                  <Wrench className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
                 </div>
               </div>
               <div>
-                <h1 className="text-2xl md:text-3xl font-black text-gray-800">
+                <h1 className="text-lg sm:text-2xl md:text-3xl font-black text-gray-800">
                   {currentT.title}
                 </h1>
-                <p className="text-sm text-gray-600 font-medium">
+                <p className="text-xs sm:text-sm text-gray-600 font-medium">
                   {currentT.subtitle}
                 </p>
               </div>
             </div>
 
-            {/* Auth Controls */}
-            <div className="flex items-center space-x-3">
-              {/* Voice Button */}
+            {/* Mobile Menu Button */}
+            <div className="flex items-center space-x-2">
+              {/* Voice Button - Always visible */}
               <button
                 onClick={handleVoiceInput}
                 disabled={isListening}
-                className={`p-3 rounded-xl transition-all duration-300 ${
+                className={`p-2 sm:p-3 rounded-xl transition-all duration-300 ${
                   isListening 
                     ? 'bg-red-500 text-white animate-pulse' 
                     : 'bg-gray-100 hover:bg-blue-100 text-gray-700'
                 }`}
                 title={currentT.voiceSearch}
               >
-                <Mic className="w-5 h-5" />
+                <Mic className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
 
-              {/* Language Toggle */}
+              {/* Language Toggle - Always visible */}
               <button
                 onClick={handleLanguageToggle}
-                className="flex items-center space-x-2 bg-blue-100 hover:bg-blue-200 px-3 py-2 rounded-xl transition-colors"
+                className="flex items-center space-x-1 sm:space-x-2 bg-blue-100 hover:bg-blue-200 px-2 sm:px-3 py-2 rounded-xl transition-colors"
               >
-                <Globe className="w-4 h-4 text-blue-600" />
-                <span className="font-bold text-blue-800">
+                <Globe className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" />
+                <span className="font-bold text-blue-800 text-xs sm:text-sm">
                   {language === 'ta' ? 'EN' : 'தமிழ்'}
                 </span>
               </button>
 
-              {/* Clerk Auth Section */}
-              <SignedIn>
-                <div className="flex items-center space-x-2">
-                  {/* Welcome Message */}
-                  <span className="text-sm text-gray-600 hidden md:block">
-                    {currentT.welcome}, {user?.name}
-                  </span>
-                  
-                  {/* Dashboard Button */}
-                  <button
-                    onClick={goToDashboard}
-                    className="bg-green-100 hover:bg-green-200 text-green-800 px-3 py-2 rounded-xl font-medium transition-colors flex items-center space-x-1"
-                  >
-                    <User className="w-4 h-4" />
-                    <span className="hidden md:block">{currentT.dashboard}</span>
-                  </button>
+              {/* Mobile Menu Toggle */}
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="md:hidden p-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
+              >
+                {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
 
-                  {/* Admin Access */}
-                  {isAdmin() && (
+              {/* Desktop Auth Controls */}
+              <div className="hidden md:flex items-center space-x-2">
+                <SignedIn>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm text-gray-600 hidden lg:block">
+                      {currentT.welcome}, {user?.name}
+                    </span>
                     <button
-                      onClick={handleAdminAccess}
-                      className="bg-purple-100 hover:bg-purple-200 text-purple-800 px-3 py-2 rounded-xl font-medium transition-colors"
+                      onClick={goToDashboard}
+                      className="bg-green-100 hover:bg-green-200 text-green-800 px-3 py-2 rounded-xl font-medium transition-colors flex items-center space-x-1"
                     >
-                      <Shield className="w-4 h-4" />
+                      <User className="w-4 h-4" />
+                      <span className="hidden lg:block">{currentT.dashboard}</span>
                     </button>
-                  )}
-
-                  {/* Logout */}
-                  <button
-                    onClick={logout}
-                    className="bg-red-100 hover:bg-red-200 text-red-800 px-3 py-2 rounded-xl transition-colors"
-                  >
-                    <LogOut className="w-4 h-4" />
-                  </button>
-                </div>
-              </SignedIn>
-
-              <SignedOut>
-                <div className="flex items-center space-x-2">
-                  <SignInButton mode="modal">
-                    <button className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-xl font-medium transition-colors">
-                      {currentT.login}
+                    {isAdmin() && (
+                      <button
+                        onClick={handleAdminAccess}
+                        className="bg-purple-100 hover:bg-purple-200 text-purple-800 px-3 py-2 rounded-xl font-medium transition-colors"
+                      >
+                        <Shield className="w-4 h-4" />
+                      </button>
+                    )}
+                    <button
+                      onClick={logout}
+                      className="bg-red-100 hover:bg-red-200 text-red-800 px-3 py-2 rounded-xl transition-colors"
+                    >
+                      <LogOut className="w-4 h-4" />
                     </button>
-                  </SignInButton>
-                  <SignUpButton mode="modal">
-                    <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl font-bold transition-colors">
-                      {currentT.signup}
-                    </button>
-                  </SignUpButton>
-                </div>
-              </SignedOut>
+                  </div>
+                </SignedIn>
+                <SignedOut>
+                  <div className="flex items-center space-x-2">
+                    <SignInButton mode="modal">
+                      <button className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-xl font-medium transition-colors">
+                        {currentT.login}
+                      </button>
+                    </SignInButton>
+                    <SignUpButton mode="modal">
+                      <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl font-bold transition-colors">
+                        {currentT.signup}
+                      </button>
+                    </SignUpButton>
+                  </div>
+                </SignedOut>
+              </div>
             </div>
           </div>
 
-          {/* Status bar */}
-          <div className="mt-4 flex flex-col md:flex-row justify-between items-start md:items-center space-y-2 md:space-y-0">
-            <div className="flex items-center space-x-4 text-sm text-gray-600">
+          {/* Mobile Menu Dropdown */}
+          {isMobileMenuOpen && (
+            <div className="md:hidden mt-4 pb-4 border-t border-gray-200">
+              <div className="pt-4 space-y-3">
+                <SignedIn>
+                  <div className="space-y-2">
+                    <div className="text-sm text-gray-600 font-medium">
+                      {currentT.welcome}, {user?.name}
+                    </div>
+                    <div className="flex flex-col space-y-2">
+                      <button
+                        onClick={() => {
+                          goToDashboard();
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className="bg-green-100 hover:bg-green-200 text-green-800 px-4 py-3 rounded-xl font-medium transition-colors flex items-center space-x-2 w-full text-left"
+                      >
+                        <User className="w-4 h-4" />
+                        <span>{currentT.dashboard}</span>
+                      </button>
+                      {isAdmin() && (
+                        <button
+                          onClick={() => {
+                            handleAdminAccess();
+                            setIsMobileMenuOpen(false);
+                          }}
+                          className="bg-purple-100 hover:bg-purple-200 text-purple-800 px-4 py-3 rounded-xl font-medium transition-colors flex items-center space-x-2 w-full text-left"
+                        >
+                          <Shield className="w-4 h-4" />
+                          <span>Admin</span>
+                        </button>
+                      )}
+                      <button
+                        onClick={() => {
+                          logout();
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className="bg-red-100 hover:bg-red-200 text-red-800 px-4 py-3 rounded-xl transition-colors flex items-center space-x-2 w-full text-left"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        <span>{currentT.logout}</span>
+                      </button>
+                    </div>
+                  </div>
+                </SignedIn>
+                <SignedOut>
+                  <div className="flex flex-col space-y-2">
+                    <SignInButton mode="modal">
+                      <button className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-3 rounded-xl font-medium transition-colors w-full text-left">
+                        {currentT.login}
+                      </button>
+                    </SignInButton>
+                    <SignUpButton mode="modal">
+                      <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-xl font-bold transition-colors w-full text-left">
+                        {currentT.signup}
+                      </button>
+                    </SignUpButton>
+                  </div>
+                </SignedOut>
+              </div>
+            </div>
+          )}
+
+          {/* Status bar - Mobile Responsive */}
+          <div className="mt-3 sm:mt-4 flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
+            <div className="flex items-center space-x-2 sm:space-x-4 text-xs sm:text-sm text-gray-600">
               <div className="flex items-center space-x-1">
-                <Clock className="w-4 h-4" />
-                {isClient && currentTime ? (
+                <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
+                {isClient ? (
                   <span>
                     {formatDate(currentTime)} • {formatTime(currentTime)}
                   </span>
@@ -515,60 +582,60 @@ const LandingPage: React.FC = () => {
               </div>
               {location && (
                 <div className="flex items-center space-x-1">
-                  <MapPin className="w-4 h-4" />
-                  <span>{location.address}</span>
+                  <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="truncate max-w-32 sm:max-w-none">{location.address}</span>
                 </div>
               )}
             </div>
             <div className="flex items-center space-x-1 text-green-600">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="font-medium text-sm">{currentT.available24x7}</span>
+              <span className="font-medium text-xs sm:text-sm">{currentT.available24x7}</span>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Main content */}
-      <main className="container mx-auto px-4 py-8">
-        {/* Hero section */}
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-5xl font-black text-gray-800 mb-4 leading-tight">
-            {currentT.greeting()}!
+      {/* Main content - Mobile Responsive */}
+      <main className="container mx-auto px-4 py-6 sm:py-8">
+        {/* Hero section - Mobile Optimized */}
+        <div className="text-center mb-8 sm:mb-12">
+          <h2 className="text-2xl sm:text-3xl md:text-5xl font-black text-gray-800 mb-3 sm:mb-4 leading-tight">
+            {getGreeting(currentTime, language)}!
           </h2>
-          <p className="text-xl text-gray-700 mb-8">
+          <p className="text-lg sm:text-xl text-gray-700 mb-6 sm:mb-8">
             {currentT.whichService}
           </p>
 
-          {/* Emergency call section */}
-          <div className="flex flex-col md:flex-row gap-6 justify-center items-center max-w-4xl mx-auto mb-12">
-            <div className="bg-gradient-to-r from-red-500 to-red-600 text-white p-8 rounded-2xl shadow-2xl animate-pulse border-4 border-red-300 min-w-[280px]">
+          {/* Emergency call section - Mobile Responsive */}
+          <div className="flex flex-col gap-4 sm:gap-6 justify-center items-center max-w-4xl mx-auto mb-8 sm:mb-12">
+            <div className="bg-gradient-to-r from-red-500 to-red-600 text-white p-4 sm:p-6 lg:p-8 rounded-2xl shadow-2xl animate-pulse border-4 border-red-300 w-full max-w-sm sm:max-w-md">
               <div className="flex items-center justify-center space-x-3 mb-4">
-                <AlertTriangle className="w-10 h-10" />
+                <AlertTriangle className="w-8 h-8 sm:w-10 sm:h-10" />
                 <div className="text-left">
-                  <div className="text-2xl font-black">{currentT.emergency}</div>
-                  <div className="text-lg">{currentT.immediateService}</div>
+                  <div className="text-lg sm:text-xl lg:text-2xl font-black">{currentT.emergency}</div>
+                  <div className="text-sm sm:text-base lg:text-lg">{currentT.immediateService}</div>
                 </div>
               </div>
-              <div className="flex gap-3">
+              <div className="flex gap-2 sm:gap-3">
                 <button
                   onClick={handleEmergencyCall}
-                  className="flex-1 bg-white text-red-600 hover:bg-red-50 px-4 py-3 rounded-xl font-bold transition-colors"
+                  className="flex-1 bg-white text-red-600 hover:bg-red-50 px-3 sm:px-4 py-2 sm:py-3 rounded-xl font-bold transition-colors text-sm sm:text-base"
                 >
-                  <Phone className="w-5 h-5 inline mr-2" />
+                  <Phone className="w-4 h-4 sm:w-5 sm:h-5 inline mr-1 sm:mr-2" />
                   {currentT.callNow}
                 </button>
                 <button
                   onClick={handleWhatsApp}
-                  className="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-xl font-bold transition-colors"
+                  className="flex-1 bg-green-500 hover:bg-green-600 text-white px-3 sm:px-4 py-2 sm:py-3 rounded-xl font-bold transition-colors text-sm sm:text-base"
                 >
-                  <MessageCircle className="w-5 h-5 inline mr-2" />
+                  <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5 inline mr-1 sm:mr-2" />
                   WhatsApp
                 </button>
               </div>
-              <p className="text-sm mt-2 opacity-90">1800-NANJIL</p>
+              <p className="text-xs sm:text-sm mt-2 opacity-90">1800-NANJIL</p>
             </div>
 
-            <div className="text-2xl font-black text-gray-400">அல்லது / OR</div>
+            <div className="text-lg sm:text-xl lg:text-2xl font-black text-gray-400">அல்லது / OR</div>
 
             <button
               onClick={handleVoiceInput}
@@ -577,10 +644,10 @@ const LandingPage: React.FC = () => {
                 isListening 
                   ? 'bg-red-100 border-red-300 text-red-600' 
                   : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white'
-              } font-black text-xl py-6 px-8 rounded-2xl shadow-xl transition-all duration-300 min-w-[280px] border-4`}
+              } font-black text-lg sm:text-xl py-4 sm:py-6 px-6 sm:px-8 rounded-2xl shadow-xl transition-all duration-300 w-full max-w-sm sm:max-w-md border-4`}
             >
-              <div className="flex items-center justify-center space-x-3">
-                <Mic className={`w-8 h-8 ${isListening ? 'animate-pulse' : ''}`} />
+              <div className="flex items-center justify-center space-x-2 sm:space-x-3">
+                <Mic className={`w-6 h-6 sm:w-8 sm:h-8 ${isListening ? 'animate-pulse' : ''}`} />
                 <div>
                   {isListening ? currentT.listening : currentT.speak}
                 </div>
@@ -589,47 +656,47 @@ const LandingPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Service cards with auth integration */}
-        <section className="mb-16">
-          <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
+        {/* Service cards - Mobile Responsive */}
+        <section className="mb-12 sm:mb-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 max-w-6xl mx-auto">
             {serviceCards.map((service) => (
               <div
                 key={service.id}
                 onClick={() => handleServiceSelect(service.type)}
-                className="group cursor-pointer bg-white rounded-3xl shadow-xl hover:shadow-2xl transform hover:-translate-y-3 transition-all duration-300 overflow-hidden border-4 border-gray-100 hover:border-blue-300"
+                className="group cursor-pointer bg-white rounded-2xl sm:rounded-3xl shadow-xl hover:shadow-2xl transform hover:-translate-y-2 sm:hover:-translate-y-3 transition-all duration-300 overflow-hidden border-4 border-gray-100 hover:border-blue-300"
               >
-                <div className={`h-4 bg-gradient-to-r ${service.color}`}></div>
-                <div className="p-8">
-                  <div className="flex items-center space-x-4 mb-6">
-                    <div className={`p-4 rounded-2xl bg-gradient-to-r ${service.color} bg-opacity-20`}>
+                <div className={`h-3 sm:h-4 bg-gradient-to-r ${service.color}`}></div>
+                <div className="p-4 sm:p-6 lg:p-8">
+                  <div className="flex items-center space-x-3 sm:space-x-4 mb-4 sm:mb-6">
+                    <div className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-r ${service.color} bg-opacity-20`}>
                       <div className={`${service.id === 'electrical' ? 'text-yellow-600' : 'text-blue-600'}`}>
                         {service.icon}
                       </div>
                     </div>
                     <div>
-                      <h4 className="text-3xl font-black text-gray-800">
+                      <h4 className="text-xl sm:text-2xl lg:text-3xl font-black text-gray-800">
                         {language === 'ta' ? service.name_ta : service.name_en}
                       </h4>
-                      <p className="text-gray-600 font-medium">
+                      <p className="text-sm sm:text-base text-gray-600 font-medium">
                         {language === 'ta' ? service.description_ta : service.description_en}
                       </p>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3 mb-6">
+                  <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-4 sm:mb-6">
                     {service.services[language].map((item, index) => (
                       <div
                         key={index}
-                        className="bg-gray-50 px-4 py-3 rounded-xl text-center font-medium text-gray-700 hover:bg-blue-50 transition-colors"
+                        className="bg-gray-50 px-2 sm:px-4 py-2 sm:py-3 rounded-lg sm:rounded-xl text-center font-medium text-gray-700 hover:bg-blue-50 transition-colors text-xs sm:text-sm"
                       >
                         {item}
                       </div>
                     ))}
                   </div>
 
-                  <div className={`text-center py-4 px-6 rounded-xl bg-gradient-to-r ${service.color} text-white font-bold text-lg group-hover:shadow-lg transition-shadow flex items-center justify-center space-x-2`}>
+                  <div className={`text-center py-3 sm:py-4 px-4 sm:px-6 rounded-xl bg-gradient-to-r ${service.color} text-white font-bold text-base sm:text-lg group-hover:shadow-lg transition-shadow flex items-center justify-center space-x-2`}>
                     <span>{isSignedIn ? currentT.bookNow : currentT.getStarted}</span>
-                    <ArrowRight className="w-5 h-5" />
+                    <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
                 </div>
               </div>
@@ -637,45 +704,45 @@ const LandingPage: React.FC = () => {
           </div>
         </section>
 
-        {/* Why choose us */}
-        <section className="mb-16">
-          <h3 className="text-3xl font-black text-center text-gray-800 mb-12">
+        {/* Why choose us - Mobile Responsive */}
+        <section className="mb-12 sm:mb-16">
+          <h3 className="text-2xl sm:text-3xl font-black text-center text-gray-800 mb-8 sm:mb-12">
             {currentT.whyChooseUs}
           </h3>
-          <div className="grid md:grid-cols-4 gap-6 max-w-6xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 max-w-6xl mx-auto">
             {[
               {
-                icon: <Users className="w-12 h-12 text-blue-600" />,
+                icon: <Users className="w-8 h-8 sm:w-10 lg:w-12 text-blue-600" />,
                 title: currentT.experienced,
                 desc: currentT.years8Plus
               },
               {
-                icon: <Clock className="w-12 h-12 text-green-600" />,
+                icon: <Clock className="w-8 h-8 sm:w-10 lg:w-12 text-green-600" />,
                 title: currentT.quickResponse,
                 desc: currentT.mins30
               },
               {
-                icon: <Star className="w-12 h-12 text-yellow-600" />,
+                icon: <Star className="w-8 h-8 sm:w-10 lg:w-12 text-yellow-600" />,
                 title: currentT.qualityWork,
                 desc: currentT.rating46
               },
               {
-                icon: <Phone className="w-12 h-12 text-purple-600" />,
+                icon: <Phone className="w-8 h-8 sm:w-10 lg:w-12 text-purple-600" />,
                 title: currentT.available247,
                 desc: currentT.emergencyService
               }
             ].map((feature, index) => (
               <div
                 key={index}
-                className="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-shadow text-center group hover:-translate-y-1 duration-300"
+                className="bg-white p-3 sm:p-4 lg:p-6 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-xl transition-shadow text-center group hover:-translate-y-1 duration-300"
               >
-                <div className="flex justify-center mb-4 group-hover:scale-110 transition-transform">
+                <div className="flex justify-center mb-2 sm:mb-4 group-hover:scale-110 transition-transform">
                   {feature.icon}
                 </div>
-                <h4 className="text-lg font-bold text-gray-800 mb-2">
+                <h4 className="text-sm sm:text-base lg:text-lg font-bold text-gray-800 mb-1 sm:mb-2">
                   {feature.title}
                 </h4>
-                <p className="text-gray-600">
+                <p className="text-xs sm:text-sm text-gray-600">
                   {feature.desc}
                 </p>
               </div>
@@ -683,72 +750,72 @@ const LandingPage: React.FC = () => {
           </div>
         </section>
 
-        {/* Quick actions with auth integration */}
-        <section className="mb-16">
-          <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+        {/* Quick actions - Mobile Responsive */}
+        <section className="mb-12 sm:mb-16">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 max-w-4xl mx-auto">
             <button
               onClick={handleNavigateToBookings}
-              className="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 text-center border-2 border-gray-100 hover:border-blue-300"
+              className="bg-white p-4 sm:p-6 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 text-center border-2 border-gray-100 hover:border-blue-300"
             >
-              <div className="text-4xl mb-3">📋</div>
-              <div className="text-lg font-bold text-gray-800">{currentT.myBookings}</div>
-              {!isSignedIn && <div className="text-sm text-red-500 mt-1">{currentT.loginRequired}</div>}
+              <div className="text-3xl sm:text-4xl mb-2 sm:mb-3">📋</div>
+              <div className="text-base sm:text-lg font-bold text-gray-800">{currentT.myBookings}</div>
+              {!isSignedIn && <div className="text-xs sm:text-sm text-red-500 mt-1">{currentT.loginRequired}</div>}
             </button>
             <button
               onClick={handleNavigateToProducts}
-              className="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 text-center border-2 border-gray-100 hover:border-blue-300"
+              className="bg-white p-4 sm:p-6 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 text-center border-2 border-gray-100 hover:border-blue-300"
             >
-              <div className="text-4xl mb-3">🛒</div>
-              <div className="text-lg font-bold text-gray-800">{currentT.products}</div>
-              {!isSignedIn && <div className="text-sm text-red-500 mt-1">{currentT.loginRequired}</div>}
+              <div className="text-3xl sm:text-4xl mb-2 sm:mb-3">🛒</div>
+              <div className="text-base sm:text-lg font-bold text-gray-800">{currentT.products}</div>
+              {!isSignedIn && <div className="text-xs sm:text-sm text-red-500 mt-1">{currentT.loginRequired}</div>}
             </button>
             <button
               onClick={handleNavigateToContact}
-              className="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 text-center border-2 border-gray-100 hover:border-blue-300"
+              className="bg-white p-4 sm:p-6 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 text-center border-2 border-gray-100 hover:border-blue-300"
             >
-              <div className="text-4xl mb-3">📞</div>
-              <div className="text-lg font-bold text-gray-800">{currentT.contact}</div>
+              <div className="text-3xl sm:text-4xl mb-2 sm:mb-3">📞</div>
+              <div className="text-base sm:text-lg font-bold text-gray-800">{currentT.contact}</div>
             </button>
           </div>
         </section>
 
-        {/* Stats */}
-        <section className="mb-16">
-          <div className="bg-gradient-to-r from-blue-600 to-green-600 rounded-3xl p-8 text-white text-center">
-            <div className="grid md:grid-cols-3 gap-8">
+        {/* Stats - Mobile Responsive */}
+        <section className="mb-12 sm:mb-16">
+          <div className="bg-gradient-to-r from-blue-600 to-green-600 rounded-2xl sm:rounded-3xl p-6 sm:p-8 text-white text-center">
+            <div className="grid grid-cols-3 gap-4 sm:gap-8">
               <div className="group">
-                <div className="text-5xl font-black mb-2 group-hover:scale-110 transition-transform">500+</div>
-                <div className="text-xl font-medium">{currentT.happyCustomers}</div>
+                <div className="text-3xl sm:text-4xl lg:text-5xl font-black mb-1 sm:mb-2 group-hover:scale-110 transition-transform">500+</div>
+                <div className="text-sm sm:text-lg lg:text-xl font-medium">{currentT.happyCustomers}</div>
               </div>
               <div className="group">
-                <div className="text-5xl font-black mb-2 group-hover:scale-110 transition-transform">24/7</div>
-                <div className="text-xl font-medium">{currentT.available24x7}</div>
+                <div className="text-3xl sm:text-4xl lg:text-5xl font-black mb-1 sm:mb-2 group-hover:scale-110 transition-transform">24/7</div>
+                <div className="text-sm sm:text-lg lg:text-xl font-medium">{currentT.available24x7}</div>
               </div>
               <div className="group">
-                <div className="text-5xl font-black mb-2 group-hover:scale-110 transition-transform">4.6★</div>
-                <div className="text-xl font-medium">{currentT.reviews}</div>
+                <div className="text-3xl sm:text-4xl lg:text-5xl font-black mb-1 sm:mb-2 group-hover:scale-110 transition-transform">4.6★</div>
+                <div className="text-sm sm:text-lg lg:text-xl font-medium">{currentT.reviews}</div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Service hours */}
-        <section className="mb-8">
-          <div className="bg-gray-50 rounded-2xl p-6 text-center border-2 border-gray-200">
-            <h4 className="text-2xl font-bold mb-6 text-gray-800 flex items-center justify-center space-x-2">
-              <Clock className="w-6 h-6" />
+        {/* Service hours - Mobile Responsive */}
+        <section className="mb-6 sm:mb-8">
+          <div className="bg-gray-50 rounded-xl sm:rounded-2xl p-4 sm:p-6 text-center border-2 border-gray-200">
+            <h4 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-gray-800 flex items-center justify-center space-x-2">
+              <Clock className="w-5 h-5 sm:w-6 sm:h-6" />
               <span>{currentT.serviceHours}</span>
             </h4>
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="bg-white p-4 rounded-xl shadow-sm">
-                <div className="font-bold text-gray-800 mb-2">{currentT.regularService}</div>
-                <div className="text-gray-600">{currentT.morningToEvening}</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+              <div className="bg-white p-3 sm:p-4 rounded-xl shadow-sm">
+                <div className="font-bold text-gray-800 mb-1 sm:mb-2 text-sm sm:text-base">{currentT.regularService}</div>
+                <div className="text-gray-600 text-sm sm:text-base">{currentT.morningToEvening}</div>
               </div>
-              <div className="bg-red-50 p-4 rounded-xl shadow-sm border border-red-200">
-                <div className="font-bold text-red-800 mb-2">{currentT.emergency247}</div>
+              <div className="bg-red-50 p-3 sm:p-4 rounded-xl shadow-sm border border-red-200">
+                <div className="font-bold text-red-800 mb-1 sm:mb-2 text-sm sm:text-base">{currentT.emergency247}</div>
                 <div className="flex items-center justify-center space-x-1">
                   <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-                  <span className="text-red-600">Always Available</span>
+                  <span className="text-red-600 text-sm">Always Available</span>
                 </div>
               </div>
             </div>
@@ -756,53 +823,53 @@ const LandingPage: React.FC = () => {
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-8">
+      {/* Footer - Mobile Responsive */}
+      <footer className="bg-gray-900 text-white py-6 sm:py-8">
         <div className="container mx-auto px-4 text-center">
-          <div className="mb-6">
-            <h4 className="text-2xl font-bold mb-2">{currentT.title}</h4>
-            <p className="text-gray-300">{currentT.trustedPartner}</p>
+          <div className="mb-4 sm:mb-6">
+            <h4 className="text-xl sm:text-2xl font-bold mb-2">{currentT.title}</h4>
+            <p className="text-gray-300 text-sm sm:text-base">{currentT.trustedPartner}</p>
           </div>
           
-          <div className="grid md:grid-cols-3 gap-6 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-4 sm:mb-6">
             <div>
-              <h5 className="font-bold mb-2 text-red-400">{currentT.emergency}</h5>
-              <p className="text-3xl font-black text-red-400">1800-NANJIL</p>
-              <p className="text-gray-400">9876-500-000</p>
+              <h5 className="font-bold mb-2 text-red-400 text-sm sm:text-base">{currentT.emergency}</h5>
+              <p className="text-2xl sm:text-3xl font-black text-red-400">1800-NANJIL</p>
+              <p className="text-gray-400 text-sm">9876-500-000</p>
             </div>
             <div>
-              <h5 className="font-bold mb-2">{currentT.serviceHours}</h5>
-              <p className="text-gray-300">{currentT.morningToEvening}</p>
-              <p className="text-red-400">{currentT.emergency247}</p>
+              <h5 className="font-bold mb-2 text-sm sm:text-base">{currentT.serviceHours}</h5>
+              <p className="text-gray-300 text-sm sm:text-base">{currentT.morningToEvening}</p>
+              <p className="text-red-400 text-sm sm:text-base">{currentT.emergency247}</p>
             </div>
             <div>
-              <h5 className="font-bold mb-2">Service Areas</h5>
-              <p className="text-gray-300">
+              <h5 className="font-bold mb-2 text-sm sm:text-base">Service Areas</h5>
+              <p className="text-gray-300 text-xs sm:text-sm">
                 {language === 'ta' ? 'நாகர்கோவில் • கன்னியாகுமரி • மார்த்தாண்டம்' : 'Nagercoil • Kanyakumari • Marthandam'}
               </p>
             </div>
           </div>
 
           <div className="border-t border-gray-600 pt-4">
-            <p className="text-gray-400">
+            <p className="text-gray-400 text-xs sm:text-sm">
               © 2024 {currentT.title}. {language === 'ta' ? 'அனைத்து உரிமைகளும் பாதுகாக்கப்பட்டவை' : 'All rights reserved'}.
             </p>
-            <p className="text-sm text-gray-500 mt-2">{currentT.servingAreas}</p>
+            <p className="text-xs text-gray-500 mt-2">{currentT.servingAreas}</p>
           </div>
         </div>
       </footer>
 
-      {/* Voice input overlay */}
+      {/* Voice input overlay - Mobile Responsive */}
       {isListening && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-8 rounded-2xl text-center shadow-2xl max-w-sm mx-4">
-            <div className="animate-pulse mb-6">
-              <Mic className="w-20 h-20 text-red-500 mx-auto" />
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white p-6 sm:p-8 rounded-2xl text-center shadow-2xl max-w-sm mx-auto w-full">
+            <div className="animate-pulse mb-4 sm:mb-6">
+              <Mic className="w-16 h-16 sm:w-20 sm:h-20 text-red-500 mx-auto" />
             </div>
-            <h3 className="text-2xl font-bold mb-2 text-gray-800">
+            <h3 className="text-xl sm:text-2xl font-bold mb-2 text-gray-800">
               {language === 'ta' ? 'பேசுங்கள்...' : 'Listening...'}
             </h3>
-            <p className="text-gray-600 mb-4">
+            <p className="text-gray-600 mb-4 text-sm sm:text-base">
               {language === 'ta' 
                 ? 'உங்கள் சேவை தேவையை சொல்லுங்கள்'
                 : 'Tell us what service you need'

@@ -1,8 +1,8 @@
 {
   "scripts": {
-    "dev": "nx serve frontend",
-    "build": "nx build frontend --prod",
-    "start": "npx serve -s dist/apps/frontend -l 3100"
+    "dev": "next dev -p 3100",
+    "build": "next build",
+    "start": "next start -p 3100"
   },
   "dependencies": {
     "@clerk/themes": "^2.4.15",

@@ -1,0 +1,14 @@
+{
+
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "build": "tsc",
+    "start": "node dist/main.js",
+    "lint": "eslint src --ext .ts"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.29.5",
+    "@neondatabase/serverless": "^0.6.0",
+    "drizzle-kit": "^0.20.18"
+  }
+}

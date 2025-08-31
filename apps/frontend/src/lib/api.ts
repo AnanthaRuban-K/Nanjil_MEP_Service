@@ -1,62 +1,107 @@
-// lib/api.ts
-import axios, { AxiosInstance } from 'axios'
+// apps/frontend/src/lib/api.ts
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3101'
 
-class ApiClient {
-  private client: AxiosInstance
+// Get auth token (implement based on your auth system)
+const getAuthToken = (): string => {
+  // For development
+  if (process.env.NODE_ENV === 'development') {
+    return 'test-token'
+  }
   
-  constructor() {
-    this.client = axios.create({
-      baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
-      timeout: 30000,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })
-    
-    this.setupInterceptors()
-  }
-
-  private setupInterceptors() {
-    // Request interceptor - add auth token
-    this.client.interceptors.request.use((config) => {
-      const token = this.getToken()
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`
-      }
-      return config
-    })
-
-    // Response interceptor - handle errors
-    this.client.interceptors.response.use(
-      (response) => response.data,
-      (error) => {
-        console.error('API Error:', error.response?.data || error.message)
-        return Promise.reject(error.response?.data || error)
-      }
-    )
-  }
-
-  // Add the missing getToken method
-  getToken(): string | null {
-    if (typeof window === 'undefined') return null
-    return localStorage.getItem('clerk-token')
-  }
-
-  async get<T>(url: string, params?: any): Promise<T> {
-    return this.client.get(url, { params })
-  }
-
-  async post<T>(url: string, data?: any): Promise<T> {
-    return this.client.post(url, data)
-  }
-
-  async put<T>(url: string, data?: any): Promise<T> {
-    return this.client.put(url, data)
-  }
-
-  async delete<T>(url: string): Promise<T> {
-    return this.client.delete(url)
-  }
+  // For production, get from Clerk or your auth provider
+  // return getClerkToken() or similar
+  return 'test-token'
 }
 
-export const api = new ApiClient()
+export const apiClient = {
+  async post(endpoint: string, data: FormData | object, options: RequestInit = {}) {
+    const url = `${API_BASE_URL}${endpoint}`
+    
+    const defaultHeaders: Record<string, string> = {
+      'Authorization': `Bearer ${getAuthToken()}`,
+    }
+    
+    // Don't set Content-Type for FormData - let browser handle it
+    if (!(data instanceof FormData)) {
+      defaultHeaders['Content-Type'] = 'application/json'
+    }
+    
+    const config: RequestInit = {
+      method: 'POST',
+      headers: {
+        ...defaultHeaders,
+        ...options.headers,
+      },
+      body: data instanceof FormData ? data : JSON.stringify(data),
+      ...options,
+    }
+    
+    try {
+      console.log('API Request:', { method: 'POST', url, headers: config.headers })
+      
+      const response = await fetch(url, config)
+      
+      if (!response.ok) {
+        const errorText = await response.text()
+        let errorMessage = 'Network error'
+        
+        try {
+          const errorJson = JSON.parse(errorText)
+          errorMessage = errorJson.error || errorMessage
+        } catch {
+          errorMessage = errorText || `HTTP ${response.status}`
+        }
+        
+        throw new Error(errorMessage)
+      }
+      
+      const result = await response.json()
+      console.log('API Response:', result)
+      return result
+    } catch (error) {
+      console.error('API Error:', error)
+      throw error
+    }
+  },
+  
+  async get(endpoint: string, options: RequestInit = {}) {
+    const url = `${API_BASE_URL}${endpoint}`
+    
+    const config: RequestInit = {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${getAuthToken()}`,
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+      ...options,
+    }
+    
+    try {
+      console.log('API Request:', { method: 'GET', url })
+      
+      const response = await fetch(url, config)
+      
+      if (!response.ok) {
+        const errorText = await response.text()
+        let errorMessage = 'Network error'
+        
+        try {
+          const errorJson = JSON.parse(errorText)
+          errorMessage = errorJson.error || errorMessage
+        } catch {
+          errorMessage = errorText || `HTTP ${response.status}`
+        }
+        
+        throw new Error(errorMessage)
+      }
+      
+      const result = await response.json()
+      console.log('API Response:', result)
+      return result
+    } catch (error) {
+      console.error('API Error:', error)
+      throw error
+    }
+  }
+}
