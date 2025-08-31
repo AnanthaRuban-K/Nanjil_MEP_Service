@@ -1,15 +1,19 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // CRITICAL: Enable standalone output for Docker deployment
+  output: 'standalone',
+  
   experimental: {
-    // Remove appDir - it's default in Next.js 14 and causes warnings
     serverComponentsExternalPackages: ['@prisma/client', 'drizzle-orm']
   },
   
   images: {
+    // Disable optimization for Docker deployment
+    unoptimized: true,
     domains: [
       'localhost',
-      'nanjilmep.com',
-      'your-storage-domain.com' // Keep if you'll use external image storage
+      'nanjilmepservice.com',
+      'api.nanjilmepservice.com',
     ],
     formats: ['image/webp', 'image/avif'],
   },
@@ -30,8 +34,11 @@ const nextConfig = {
     return config;
   },
   
-  // Remove the transpilePackages since you're not using a monorepo structure
-  // transpilePackages: ['@nanjil-mep/shared-types', '@nanjil-mep/shared-utils', '@nanjil-mep/ui-components'],
+  // Disable source maps in production for better performance
+  productionBrowserSourceMaps: false,
+  
+  // Enable SWC minifier
+  swcMinify: true,
   
   // Add security headers
   async headers() {
