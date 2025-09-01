@@ -27,11 +27,17 @@
   "devDependencies": {
     "@nx/eslint-plugin": "^21.4.1",
     "@types/node": "^24.3.0",
+    "@types/pg": "^8.15.5",
     "concurrently": "^8.2.2",
+    "drizzle-kit": "^0.20.8",
     "eslint": "^9.34.0"
   },
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=9.0.0"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.30.10",
+    "pg": "^8.16.3"
   }
 }

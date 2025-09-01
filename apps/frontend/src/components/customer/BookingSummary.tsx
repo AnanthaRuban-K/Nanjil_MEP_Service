@@ -59,10 +59,7 @@ export const BookingSummary: React.FC = () => {
     },
   });
 
-  // apps/frontend/src/components/customer/BookingSummary.tsx
-// Fix the cost calculation section in the useEffect:
-
-useEffect(() => {
+  useEffect(() => {
   const savedData = sessionStorage.getItem('bookingData');
   if (savedData) {
     const data = JSON.parse(savedData);

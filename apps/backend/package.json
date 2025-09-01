@@ -15,19 +15,19 @@
   "dependencies": {
     "@clerk/backend": "^1.13.4",
     "@hono/node-server": "^1.19.1",
-    "hono": "^4.9.5",
-    "drizzle-orm": "^0.33.0",
-    "postgres": "^3.4.7",
-    "ioredis": "^5.7.0",
     "cors": "^2.8.5",
+    "hono": "^4.9.5",
+    "ioredis": "^5.7.0",
+    "pg": "^8.16.3",
+    "postgres": "^3.4.7",
     "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/node": "^20.19.11",
+    "@types/pg": "^8.15.5",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
-    "drizzle-kit": "^0.24.0",
     "eslint": "^8.57.0",
     "tsx": "^4.19.0",
     "typescript": "^5.6.2"
