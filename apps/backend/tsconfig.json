@@ -1,41 +1,28 @@
-// apps/backend/tsconfig.json - Fixed with proper path aliases
 {
-  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "lib": ["ES2021", "DOM"],
-    "module": "ESNext",
     "target": "ES2022",
-    "moduleResolution": "bundler",
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "forceConsistentCasingInFileNames": true,
+    "module": "ESNext",
+    "lib": ["ES2022"],
+    "outDir": "./dist",
+    "rootDir": "./src",
     "strict": true,
-    "noImplicitOverride": true,
-    "noPropertyAccessFromIndexSignature": false,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
+    "esModuleInterop": true,
     "skipLibCheck": true,
-    "allowJs": true,
+    "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "isolatedModules": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "baseUrl": "./src",
+    "types": ["node"],
     "paths": {
-      "@/*": ["*"],
-      "@/db": ["db/index"],
-      "@/db/*": ["db/*"],
-      "@/routes/*": ["routes/*"],
-      "@/middleware/*": ["middleware/*"],
-      "@/utils/*": ["utils/*"],
-      "@/types/*": ["types/*"]
-    }
+      "@/*": ["./src/*"]
+    },
+    "baseUrl": "."
   },
-  "files": [],
-  "include": [],
-  "references": [
-    {
-      "path": "./tsconfig.app.json"
-    }
-  ]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"]
 }

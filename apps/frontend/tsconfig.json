@@ -1,7 +1,9 @@
 {
-  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "target": "es5",
+    "lib": ["dom", "dom.iterable", "es6"],
     "allowJs": true,
+    "skipLibCheck": true,
     "strict": true,
     "noEmit": true,
     "esModuleInterop": true,
@@ -19,18 +21,12 @@
     "paths": {
       "@/*": ["./src/*"],
       "@/components/*": ["./src/components/*"],
+      "@/lib/*": ["./src/lib/*"],
       "@/stores/*": ["./src/stores/*"],
-      "@/utils/*": ["./src/utils/*"],
-      "@/hooks/*": ["./src/hooks/*"],
-      "@/types/*": ["./src/types/*"]
-    }
+      "@/types": ["./src/types/index.ts"]
+    },
+    "baseUrl": "."
   },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    "../../dist/apps/frontend/.next/types/**/*.ts",
-    ".next/types/**/*.ts",
-    "../../libs/ui/components/src/hooks/use-toast.ts"
-  ],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]
 }

@@ -1,40 +1,35 @@
 {
   "name": "nanjil-mep-services",
   "version": "1.0.0",
+  "description": "Electrical & Plumbing Services Booking Application",
   "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
-    "dev": "next dev -p 3100",
-    "build": "next build",
-    "start": "next start -p 3100",
-    "lint": "next lint"
-  },
-  "dependencies": {
-    "next": "^14.2.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "@clerk/nextjs": "^4.29.0",
-    "@clerk/themes": "^2.4.15",
-    "next-themes": "^0.4.6",
-    "zustand": "^4.4.0",
-    "@tanstack/react-query": "^5.0.0",
-    "react-hook-form": "^7.47.0",
-    "zod": "^3.22.0",
-    "@hookform/resolvers": "^3.3.0",
-    "tailwindcss": "^3.4.0",
-    "postcss": "^8.4.0",
-    "autoprefixer": "^10.4.0"
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:frontend": "cd apps/frontend && npm run dev",
+    "dev:backend": "cd apps/backend && npm run dev",
+    "build": "npm run build:backend && npm run build:frontend",
+    "build:frontend": "cd apps/frontend && npm run build",
+    "build:backend": "cd apps/backend && npm run build",
+    "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
+    "start:frontend": "cd apps/frontend && npm run start",
+    "start:backend": "cd apps/backend && npm run start",
+    "lint": "npm run lint:frontend && npm run lint:backend",
+    "lint:frontend": "cd apps/frontend && npm run lint",
+    "lint:backend": "cd apps/backend && npm run lint",
+    "clean": "rm -rf node_modules apps/*/node_modules apps/*/dist apps/*/.next",
+    "docker:build": "docker-compose -f docker-compose.dev.yml build",
+    "docker:up": "docker-compose -f docker-compose.dev.yml up -d",
+    "docker:down": "docker-compose -f docker-compose.dev.yml down"
   },
   "devDependencies": {
-    "typescript": "^5.3.0",
-    "@types/react": "^18.2.0",
-    "@types/react-dom": "^18.2.0",
-    "@types/node": "^20.0.0",
-    "eslint": "^8.56.0",
-    "eslint-config-next": "^14.2.0",
-    "@typescript-eslint/parser": "^7.0.0",
-    "@typescript-eslint/eslint-plugin": "^7.0.0"
+    "@nx/eslint-plugin": "^21.4.1",
+    "concurrently": "^8.2.2"
   },
-  "overrides": {
-    "eslint": "^8.56.0"
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
   }
 }
