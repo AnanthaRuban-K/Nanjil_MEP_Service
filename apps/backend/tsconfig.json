@@ -18,6 +18,11 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "types": ["node"],
+    "noImplicitAny": false,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
     "paths": {
       "@/*": ["./src/*"]
     },

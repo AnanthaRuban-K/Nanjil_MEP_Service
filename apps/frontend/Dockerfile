@@ -1,4 +1,6 @@
-# Use Node 18 (not 20) for better compatibility
+# Frontend-specific Dockerfile  
+# Place this in apps/frontend/Dockerfile
+
 FROM node:18-alpine AS base
 
 # Install dependencies only when needed
@@ -7,10 +9,8 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # Copy package files
-COPY package.json package-lock.json* ./
-
-# Install dependencies with legacy peer deps to fix ESLint conflicts
-RUN npm ci --legacy-peer-deps --prefer-offline
+COPY package*.json ./
+RUN npm ci --legacy-peer-deps
 
 # Rebuild the source code only when needed
 FROM base AS builder
@@ -18,12 +18,17 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Build the application with standalone output
+# Build with all environment variables
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
+
+# Type check first
+RUN npm run type-check
+
+# Build the application
 RUN npm run build
 
-# Production image
+# Production image, copy all the files and run next
 FROM base AS runner
 WORKDIR /app
 
@@ -39,12 +44,20 @@ RUN adduser --system --uid 1001 nextjs
 # Copy public assets
 COPY --from=builder /app/public ./public
 
-# Copy the standalone output
+# Set correct permissions for standalone output
+RUN mkdir .next
+RUN chown nextjs:nodejs .next
+
+# Copy the standalone build output
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 USER nextjs
 
 EXPOSE 3100
+
+# Health check for frontend
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3100 || exit 1
 
 CMD ["node", "server.js"]

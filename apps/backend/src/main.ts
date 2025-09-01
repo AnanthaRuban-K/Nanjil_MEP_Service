@@ -13,7 +13,7 @@ app.use(
   '*',
   cors({
     origin: process.env.NODE_ENV === 'production' 
-      ? ['https://your-domain.com']
+      ? ['https://nanjilmepservice.com']
       : ['http://localhost:3100', 'http://localhost:3000'],
     allowHeaders: ['Content-Type', 'Authorization'],
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],

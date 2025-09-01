@@ -1,6 +1,69 @@
 version: '3.8'
 
 services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: nanjil_mep
+      POSTGRES_USER: postgres  
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-defaultpassword}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-defaultpassword}
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Backend API
+  backend:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+    ports:
+      - "3101:3101"
+    environment:
+      - NODE_ENV=production
+      - PORT=3101
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD:-defaultpassword}@db:5432/nanjil_mep
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-defaultpassword}@redis:6379
+      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
+      - CLERK_WEBHOOK_SECRET=${CLERK_WEBHOOK_SECRET}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    volumes:
+      - uploads:/app/uploads
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3101/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Frontend Next.js
   frontend:
     build:
       context: ./apps/frontend
@@ -11,24 +74,18 @@ services:
       - NODE_ENV=production
       - NEXT_PUBLIC_API_URL=http://backend:3101
       - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      - NEXT_PUBLIC_APP_NAME=Nanjil MEP Services
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     restart: unless-stopped
-
-  backend:
-    build:
-      context: ./apps/backend
-      dockerfile: Dockerfile
-    ports:
-      - "3101:3101"
-    environment:
-      - NODE_ENV=production
-      - DATABASE_URL=${DATABASE_URL}
-      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
-      - REDIS_URL=${REDIS_URL}
-    restart: unless-stopped
-    volumes:
-      - uploads:/app/uploads
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3100"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 volumes:
+  postgres_data:
+  redis_data:
   uploads:
