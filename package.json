@@ -26,7 +26,9 @@
   },
   "devDependencies": {
     "@nx/eslint-plugin": "^21.4.1",
-    "concurrently": "^8.2.2"
+    "@types/node": "^24.3.0",
+    "concurrently": "^8.2.2",
+    "eslint": "^9.34.0"
   },
   "engines": {
     "node": ">=18.0.0",
