@@ -1,4 +1,4 @@
-# apps/frontend/Dockerfile
+# Use Node 18 (not 20) for better compatibility
 FROM node:18-alpine AS base
 
 # Install dependencies only when needed
@@ -8,20 +8,19 @@ WORKDIR /app
 
 # Copy package files
 COPY package.json package-lock.json* ./
-# Install dependencies including devDependencies (needed for build)
-RUN npm install && npm run build
 
+# Install dependencies with legacy peer deps to fix ESLint conflicts
+RUN npm ci --legacy-peer-deps --prefer-offline
 
 # Rebuild the source code only when needed
 FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-ENV NEXT_DISABLE_ESLINT=true
-ENV NEXT_DISABLE_TYPECHECK=true
 
-# Build the application (this will create .next/standalone)
+# Build the application with standalone output
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=production
 RUN npm run build
 
 # Production image
@@ -33,6 +32,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3100
 ENV HOSTNAME="0.0.0.0"
 
+# Create non-root user
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 

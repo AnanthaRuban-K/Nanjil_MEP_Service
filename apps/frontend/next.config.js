@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // CRITICAL: Enable standalone output for Docker deployment
+  // CRITICAL: Must have standalone output for Docker
   output: 'standalone',
   
   experimental: {
@@ -12,8 +12,7 @@ const nextConfig = {
     unoptimized: true,
     domains: [
       'localhost',
-      'nanjilmepservice.com',
-      'api.nanjilmepservice.com',
+      'nanjilmep.com'
     ],
     formats: ['image/webp', 'image/avif'],
   },
@@ -23,7 +22,7 @@ const nextConfig = {
     NEXT_PUBLIC_APP_VERSION: '1.0.0',
   },
   
-  // Webpack config for PWA and module resolution
+  // Webpack config for module resolution
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {
@@ -34,13 +33,13 @@ const nextConfig = {
     return config;
   },
   
-  // Disable source maps in production for better performance
+  // Disable source maps for production
   productionBrowserSourceMaps: false,
   
   // Enable SWC minifier
   swcMinify: true,
   
-  // Add security headers
+  // Security headers
   async headers() {
     return [
       {
