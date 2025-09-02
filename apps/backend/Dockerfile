@@ -3,42 +3,59 @@
 
 FROM node:18-alpine AS base
 
-# Install dependencies
+# -----------------------
+# Dependencies stage
+# -----------------------
 FROM base AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Copy monorepo root package.json + lock
+COPY ../../package.json ../../package-lock.json ./
+
+# Copy backend package.json (for workspace awareness)
+COPY ./package.json ./apps/backend/package.json
+
+# Install dependencies using root lockfile
 RUN npm ci --legacy-peer-deps
 
+# -----------------------
 # Build stage
+# -----------------------
 FROM base AS builder
 WORKDIR /app
+
+# Copy dependencies from deps
 COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+
+# Copy backend source
+COPY . ./apps/backend
+
+# Move into backend dir
+WORKDIR /app/apps/backend
 
 # Type check and build
-RUN npm run type-check
-RUN npm run build
+RUN npm run type-check && npm run build
 
-# Production stage
+# -----------------------
+# Runner stage
+# -----------------------
 FROM base AS runner
-WORKDIR /app
+WORKDIR /app/apps/backend
 
 ENV NODE_ENV=production
 ENV PORT=3101
 
 # Create non-root user
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 backend-user
+RUN addgroup --system --gid 1001 nodejs \
+  && adduser --system --uid 1001 backend-user
 
-# Copy built application
-COPY --from=builder --chown=backend-user:nodejs /app/dist ./dist
-COPY --from=builder --chown=backend-user:nodejs /app/package*.json ./
+# Copy built app and package.json
+COPY --from=builder --chown=backend-user:nodejs /app/apps/backend/dist ./dist
+COPY --from=builder --chown=backend-user:nodejs /app/apps/backend/package.json ./
 
-# Install production dependencies only
-RUN npm ci --only=production --legacy-peer-deps && npm cache clean --force
+# Copy production node_modules only
+COPY --from=deps --chown=backend-user:nodejs /app/node_modules ./node_modules
 
 USER backend-user
 
