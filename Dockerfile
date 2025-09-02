@@ -53,7 +53,7 @@ COPY --from=backend-builder --chown=backend-user:nodejs /app/apps/backend/dist .
 COPY --from=backend-builder --chown=backend-user:nodejs /app/apps/backend/package*.json ./
 
 # Install only production dependencies
-RUN npm ci --only=production --legacy-peer-deps
+COPY --from=deps --chown=backend-user:nodejs /app/node_modules ./node_modules
 
 USER backend-user
 EXPOSE 3101
