@@ -57,6 +57,11 @@ COPY --from=builder --chown=backend-user:nodejs /app/apps/backend/package.json .
 # Copy production node_modules only
 COPY --from=deps --chown=backend-user:nodejs /app/node_modules ./node_modules
 
+
+# Use root package.json + lockfile
+COPY ./package.json ./package-lock.json /app/
+# Copy backend package.json also (for workspace awareness)
+COPY ./apps/backend/package.json /app/apps/backend/
 USER backend-user
 
 EXPOSE 3101
